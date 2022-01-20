@@ -102,9 +102,9 @@ class Texas:
                                                          desc=desc,
                                                          leave=False)):
 
-                    print()
-                    print(f'"{sentence}"')
-                    print()
+                    # print()
+                    # print(f'"{sentence}"')
+                    # print()
 
                     # Tokenize the sentence
                     tokens = tokenizer(sentence, return_tensors='pt')
