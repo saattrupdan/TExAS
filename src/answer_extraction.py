@@ -32,12 +32,10 @@ def extract_translated_answer(answer_token_idx_start: int,
     # Abbreviate wordy variable names
     s, e = answer_token_idx_start, answer_token_idx_end
 
-    e = max(s, e)
-
     # Extract all the cross-attention values for the answer.
     # This has shape (attention_heads, num_target_tokens, answer),
     # with answer being the number of tokens in the answer.
-    att_values = cross_attention_tensor[:, :, range(s, e + 1)]
+    att_values = cross_attention_tensor[:, :, s : e + 1]
 
     # Use the attention head with the highest value for each token.
     # This has shape (num_target_tokens, answer).
@@ -46,7 +44,7 @@ def extract_translated_answer(answer_token_idx_start: int,
     # Start of beam search.
     # For the first token, we simply take the top `beam_width` best tokens,
     # i.e. the tokens with the highest cross-attention values.
-    beam = att_values[:, s].topk(k=beam_width, dim=0)
+    beam = att_values[:, 0].topk(k=beam_width, dim=0)
 
     # `beam_values` will have shape (beam_width,) and contain the sum
     # of the cross-attention values for the `beam_width` best token
@@ -82,14 +80,16 @@ def extract_translated_answer(answer_token_idx_start: int,
 
             # We select the top `beam_width` best attention values for the
             # next token.
-            sub_beam = (att_values[att_start: att_end, token_idx]
-                    .topk(k=beam_width, dim=0))
+            sub_beam = (att_values[att_start: att_end, token_idx - s]
+                        .topk(k=beam_width, dim=0))
             sub_beam_values, sub_beam_idxs = sub_beam
+            sub_beam_idxs += att_start
 
             # We compute new beam values and indices for these new
             # combinations
-            combs = (beam_idx_tensor.repeat(beam_width), sub_beam_idxs)
-            sub_beam_idxs = torch.cat(combs, dim=0)
+            combs = (beam_idx_tensor.repeat(beam_width, 1),
+                     sub_beam_idxs.unsqueeze(dim=1))
+            sub_beam_idxs = torch.cat(combs, dim=1)
             sub_beam_values = beam_values[i] + sub_beam_values
 
             # We store these in the `all_beam_idxs` and `all_beam_values`
