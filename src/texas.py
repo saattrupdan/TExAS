@@ -247,6 +247,11 @@ class Texas:
                 if translated_context[min_char_idx] == ' ':
                     min_char_idx += 1
 
+                # Ensure that the answer does not end with punctuation or a
+                # space
+                if translated_context[max_char_idx - 1] in ' .,:;':
+                    max_char_idx -= 1
+
                 # pred_toks = [ctx[s:e] for s, e in charmap]
                 # true_toks = tokenizer.convert_ids_to_tokens(tokens)
                 # print(list(zip(pred_toks, true_toks)))
