@@ -138,7 +138,8 @@ class Texas:
         # Convert the token IDs to character IDs
         min_token_idx = min(idxs)
         max_token_idx = max(idxs)
-        min_char_idx = translated_charmap[min_token_idx][0]
+        min_char_idx = min(translated_charmap[min_token_idx][0],
+                           len(translated_context))
         max_char_idx = min(translated_charmap[max_token_idx][1],
                            len(translated_context))
 
