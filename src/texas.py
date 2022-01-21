@@ -117,7 +117,7 @@ class Texas:
         token_strings = (
             self.translation_tokenizer.convert_ids_to_tokens(translated_tokens)
         )
-        regex = '(▁.*|[.,:;]+.*)'
+        regex = '(▁.*|[!?.,:;]+.*)'
         while not (max(idxs) + 1 == len(token_strings) or
                    re.match(regex, token_strings[max(idxs) + 1])):
             idxs.append(max(idxs) + 1)
@@ -134,7 +134,7 @@ class Texas:
 
         # Ensure that the answer does not end with punctuation or a
         # space
-        while translated_context[max_char_idx - 1] in ' .,:;)"':
+        while translated_context[max_char_idx - 1] in ' !?.,:;)"':
             max_char_idx -= 1
 
         return min_char_idx, max_char_idx
@@ -323,7 +323,7 @@ class Texas:
                     answer_start = (translated_context.lower()
                                                       .index(answer.lower()))
                     answer_end = answer_start + len(answer)
-                    if translated_context[answer_end] in '[ .,:;]':
+                    if translated_context[answer_end] in '[ !?.,:;]':
                         answers['answer_start'].append(answer_start)
                         answers['text'].append(answer)
                         answers['extraction_method'].append('unique')
@@ -342,11 +342,13 @@ class Texas:
                                     .lower()
                                     .index(translated_answer.lower()))
                     answer_end = answer_start + len(translated_answer)
-                    answer = translated_context[answer_start:answer_end]
-                    answers['answer_start'].append(answer_start)
-                    answers['text'].append(answer)
-                    answers['extraction_method'].append('translated_unique')
-                    continue
+                    if translated_context[answer_end] in '[ !?.,:;]':
+                        answer = translated_context[answer_start:answer_end]
+                        method = 'translated_unique'
+                        answers['answer_start'].append(answer_start)
+                        answers['text'].append(answer)
+                        answers['extraction_method'].append(method)
+                        continue
 
 
                 # CASE 3: Check if the (non-translated) answer appears at all
@@ -383,10 +385,12 @@ class Texas:
                         answer_start = (translated_ctx_segment
                                         .lower()
                                         .index(answer.lower())) + s
-                        answers['answer_start'].append(answer_start)
-                        answers['text'].append(answer)
-                        answers['extraction_method'].append('att+unique')
-                        continue
+                        answer_end = answer_start + len(answer)
+                        if translated_context[answer_end] in '[ ?!.,:;]':
+                            answers['answer_start'].append(answer_start)
+                            answers['text'].append(answer)
+                            answers['extraction_method'].append('att+unique')
+                            continue
 
 
                 # CASE 4: Check if the translated answer appears at all in the
@@ -423,11 +427,13 @@ class Texas:
                         answer_start = (translated_ctx_segment
                                         .lower()
                                         .index(translated_answer.lower())) + s
-                        method = 'att+translated_unique'
-                        answers['answer_start'].append(answer_start)
-                        answers['text'].append(translated_answer)
-                        answers['extraction_method'].append(method)
-                        continue
+                        answer_end = answer_start + len(translated_answer)
+                        if translated_context[answer_end] in '[ !?.,:;]':
+                            method = 'att+translated_unique'
+                            answers['answer_start'].append(answer_start)
+                            answers['text'].append(translated_answer)
+                            answers['extraction_method'].append(method)
+                            continue
 
 
                 # CASE 5: Use cross-attentions to find the answer in the
