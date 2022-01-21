@@ -1,2 +1,3 @@
-# scandiQA
-Scandinavian (da, nb, nn, sv, is, fo) question-answering datasets and models.
+# TExAS
+The *T*ranslate and *Ex*tract using *A*ttention *S*cores method, to convert
+SQuAD-like question-answering datasets into (almost) any lanugage.
