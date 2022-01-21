@@ -16,6 +16,9 @@ from typing import Union, List, Tuple
 from answer_extraction import extract_translated_answer
 
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
 class Texas:
     '''The TExAS algorithm for translating QA datasets.
 
@@ -27,7 +30,8 @@ class Texas:
                              .from_pretrained('facebook/m2m100_1.2B'))
     translation_model = (M2M100ForConditionalGeneration
                          .from_pretrained('facebook/m2m100_1.2B')
-                         .eval())
+                         .eval()
+                         .to(device))
     cache = tuple()
 
     def _translate(self,
@@ -51,18 +55,27 @@ class Texas:
                 or a triple of the form (translation, input_tokens,
                 translation_tokens).
         '''
-        tokenizer = self.translation_tokenizer
-        model = self.translation_model
-        tokens = tokenizer(doc, return_tensors='pt')['input_ids']
-        bos_token = tokenizer.get_lang_id(target_language)
-        params = dict(forced_bos_token_id=bos_token)
-        translated_tokens = model.generate(tokens, **params)
-        params = dict(skip_special_tokens=True)
-        translation = tokenizer.batch_decode(translated_tokens, **params)[0]
-        if return_tokens:
-            return translation, tokens, translated_tokens
-        else:
-            return translation
+        with torch.no_grad():
+            tokenizer = self.translation_tokenizer
+            model = self.translation_model
+            tokens = tokenizer(doc, return_tensors='pt')['input_ids']
+            bos_token = tokenizer.get_lang_id(target_language)
+            params = dict(forced_bos_token_id=bos_token)
+
+            try:
+                translated_tokens = model.generate(tokens.to(device), **params)
+                translated_tokens = translated_tokens.cpu()
+            except:
+                model.cpu()
+                translated_tokens = model.generate(tokens, **params)
+                model.to(device)
+
+            params = dict(skip_special_tokens=True)
+            translation = tokenizer.batch_decode(translated_tokens, **params)
+            if return_tokens:
+                return translation[0], tokens, translated_tokens
+            else:
+                return translation[0]
 
     def _extract_answer(self,
                         char_start_idx: int,
@@ -138,6 +151,42 @@ class Texas:
             max_char_idx -= 1
 
         return min_char_idx, max_char_idx
+
+    def _compute_cross_attentions(self,
+                                  tokens: torch.Tensor,
+                                  translated_tokens: torch.Tensor
+                                  ) -> torch.Tensor:
+        '''Compute the cross attentions of the tokens and translated tokens.
+
+        Args:
+            tokens (torch.Tensor):
+                The tokens of the original context.
+            translated_tokens (torch.Tensor):
+                The tokens of the translated context.
+
+        Returns:
+            torch.Tensor:
+                The cross attentions of the tokens and translated tokens, of
+                shape (num_attention_heads, num_translated_tokens, num_tokens).
+        '''
+        with torch.no_grad():
+            dec_in_ids = translated_tokens.unsqueeze(0)
+            try:
+                outputs = model.forward(
+                    tokens.to(device),
+                    decoder_input_ids=dec_in_ids.to(device),
+                    output_attentions=True
+                )
+            except:
+                model.cpu()
+                outputs = model.forward(
+                    tokens,
+                    decoder_input_ids=dec_in_ids,
+                    output_attentions=True
+                )
+                model.to(device)
+            cross_attentions = outputs.cross_attentions[0][0]
+            return cross_attentions
 
     def translate_dataset(self,
                           dataset_id: str = 'squad_v2',
@@ -323,7 +372,8 @@ class Texas:
                     answer_start = (translated_context.lower()
                                                       .index(answer.lower()))
                     answer_end = answer_start + len(answer)
-                    if translated_context[answer_end] in '[ !?.,:;]':
+                    if (answer_end >= len(translated_context) or
+                            translated_context[answer_end] in '[ !?.,:;]'):
                         answers['answer_start'].append(answer_start)
                         answers['text'].append(answer)
                         answers['extraction_method'].append('unique')
@@ -342,7 +392,8 @@ class Texas:
                                     .lower()
                                     .index(translated_answer.lower()))
                     answer_end = answer_start + len(translated_answer)
-                    if translated_context[answer_end] in '[ !?.,:;]':
+                    if (answer_end >= len(translated_context) or
+                            translated_context[answer_end] in '[ !?.,:;]'):
                         answer = translated_context[answer_start:answer_end]
                         method = 'translated_unique'
                         answers['answer_start'].append(answer_start)
@@ -357,13 +408,10 @@ class Texas:
 
                     # Get the cross attentions
                     if not computed_cross_attentions:
-                        dec_in_ids = translated_tokens.unsqueeze(0)
-                        outputs = model.forward(
-                            tokens,
-                            decoder_input_ids=dec_in_ids,
-                            output_attentions=True
+                        cross_attentions = self._compute_cross_attentions(
+                            tokens=tokens,
+                            translated_tokens=translated_tokens
                         )
-                        cross_attentions = outputs.cross_attentions[0][0]
                         computed_cross_attentions = True
 
                     # Use the cross attentions to find the rough location of
@@ -386,7 +434,8 @@ class Texas:
                                         .lower()
                                         .index(answer.lower())) + s
                         answer_end = answer_start + len(answer)
-                        if translated_context[answer_end] in '[ ?!.,:;]':
+                        if (answer_end >= len(translated_context) or
+                                translated_context[answer_end] in '[ !?.,:;]'):
                             answers['answer_start'].append(answer_start)
                             answers['text'].append(answer)
                             answers['extraction_method'].append('att+unique')
@@ -399,13 +448,10 @@ class Texas:
 
                     # Get the cross attentions
                     if not computed_cross_attentions:
-                        dec_in_ids = translated_tokens.unsqueeze(0)
-                        outputs = model.forward(
-                            tokens,
-                            decoder_input_ids=dec_in_ids,
-                            output_attentions=True
+                        cross_attentions = self._compute_cross_attentions(
+                            tokens=tokens,
+                            translated_tokens=translated_tokens
                         )
-                        cross_attentions = outputs.cross_attentions[0][0]
                         computed_cross_attentions = True
 
                     # Use the cross attentions to find the rough location of
@@ -428,7 +474,8 @@ class Texas:
                                         .lower()
                                         .index(translated_answer.lower())) + s
                         answer_end = answer_start + len(translated_answer)
-                        if translated_context[answer_end] in '[ !?.,:;]':
+                        if (answer_end >= len(translated_context) or
+                                translated_context[answer_end] in '[ !?.,:;]'):
                             method = 'att+translated_unique'
                             answers['answer_start'].append(answer_start)
                             answers['text'].append(translated_answer)
@@ -441,13 +488,10 @@ class Texas:
 
                 # Get the cross attentions
                 if not computed_cross_attentions:
-                    dec_in_ids = translated_tokens.unsqueeze(0)
-                    outputs = model.forward(
-                        tokens,
-                        decoder_input_ids=dec_in_ids,
-                        output_attentions=True
+                    cross_attentions = self._compute_cross_attentions(
+                        tokens=tokens,
+                        translated_tokens=translated_tokens
                     )
-                    cross_attentions = outputs.cross_attentions[0][0]
                     computed_cross_attentions = True
 
                 # Use the cross attentions to find the rough location of
