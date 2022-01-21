@@ -186,7 +186,7 @@ class Texas:
                     output_attentions=True
                 )
                 model.to(device)
-            cross_attentions = outputs.cross_attentions[0][0]
+            cross_attentions = outputs.cross_attentions[0][0].cpu()
             return cross_attentions
 
     def translate_dataset(self,
@@ -532,4 +532,7 @@ if __name__ == '__main__':
     texas = Texas()
     texas.translate_dataset(dataset_id='squad_v2',
                             split='train',
+                            target_language='da')
+    texas.translate_dataset(dataset_id='squad_v2',
+                            split='validation',
                             target_language='da')
