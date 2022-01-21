@@ -322,10 +322,12 @@ class Texas:
                 if translated_context.lower().count(answer.lower()) == 1:
                     answer_start = (translated_context.lower()
                                                       .index(answer.lower()))
-                    answers['answer_start'].append(answer_start)
-                    answers['text'].append(answer)
-                    answers['extraction_method'].append('unique')
-                    continue
+                    answer_end = answer_start + len(answer)
+                    if translated_context[answer_end] in '[ .,:;]':
+                        answers['answer_start'].append(answer_start)
+                        answers['text'].append(answer)
+                        answers['extraction_method'].append('unique')
+                        continue
 
 
                 # CASE 2: Check if the translated answer appears uniquely in
@@ -365,8 +367,8 @@ class Texas:
                     # Use the cross attentions to find the rough location of
                     # the (non-translated) answer
                     s, e = self._extract_answer(
-                        char_start_idx=char_s - 50,
-                        char_end_idx=char_s + len(answer) + 50,
+                        char_start_idx=max(0, char_s - 10),
+                        char_end_idx=min(len(ctx), char_s + len(answer) + 10),
                         charmap=charmap,
                         translated_charmap=translated_charmap,
                         translated_tokens=translated_tokens,
@@ -374,8 +376,10 @@ class Texas:
                         cross_attentions=cross_attentions
                     )
 
-                    translated_ctx_segment = translated_context.lower()[s:e]
-                    if translated_ctx_segment.count(answer.lower()) == 1:
+                    translated_ctx_segment = translated_context[s:e]
+                    if (translated_ctx_segment
+                            .lower()
+                            .count(answer.lower()) == 1):
                         answer_start = (translated_ctx_segment
                                         .lower()
                                         .index(answer.lower())) + s
@@ -403,8 +407,8 @@ class Texas:
                     # Use the cross attentions to find the rough location of
                     # the translated answer
                     s, e = self._extract_answer(
-                        char_start_idx=char_s - 50,
-                        char_end_idx=char_s + len(answer) + 50,
+                        char_start_idx=max(0, char_s - 10),
+                        char_end_idx=min(len(ctx), char_s + len(answer) + 10),
                         charmap=charmap,
                         translated_charmap=translated_charmap,
                         translated_tokens=translated_tokens,
