@@ -12,6 +12,7 @@ from transformers import M2M100Tokenizer, M2M100ForConditionalGeneration
 import spacy
 import re
 import torch
+from typing import Union, List, Tuple
 from answer_extraction import extract_translated_answer
 
 
@@ -28,6 +29,115 @@ class Texas:
                          .from_pretrained('facebook/m2m100_1.2B')
                          .eval())
     cache = tuple()
+
+    def _translate(self,
+                   doc: str,
+                   target_language: str,
+                   return_tokens: bool = False) -> Union[str, tuple]:
+        '''Translate a single document.
+
+        Args:
+            doc (str):
+                The document to translate.
+            target_language (str):
+                The target language.
+            return_tokens (bool):
+                Whether to also return the tokens of the input and the
+                translation.
+
+        Returns:
+            str or triple:
+                Either the translated document, if `return_tokens` is False,
+                or a triple of the form (translation, input_tokens,
+                translation_tokens).
+        '''
+        tokenizer = self.translation_tokenizer
+        model = self.translation_model
+        tokens = tokenizer(doc, return_tensors='pt')['input_ids']
+        bos_token = tokenizer.get_lang_id(target_language)
+        params = dict(forced_bos_token_id=bos_token)
+        translated_tokens = model.generate(tokens, **params)
+        params = dict(skip_special_tokens=True)
+        translation = tokenizer.batch_decode(translated_tokens, **params)[0]
+        if return_tokens:
+            return translation, tokens, translated_tokens
+        else:
+            return translation
+
+    def _extract_answer(self,
+                        char_start_idx: int,
+                        char_end_idx: int,
+                        charmap: List[Tuple[int, int]],
+                        translated_charmap: List[Tuple[int, int]],
+                        translated_tokens: torch.Tensor,
+                        translated_context: str,
+                        cross_attentions: torch.Tensor) -> Tuple[int, int]:
+        '''Extract the answer from the translated context.
+
+        Args:
+            char_start_idx (int):
+                The start index of the answer in the original context.
+            char_end_idx (int):
+                The end index of the answer in the original context.
+            charmap (list of pairs of ints):
+                The character mapping of the original context.
+            translated_charmap (list of pairs of ints):
+                The character mapping of the translated context.
+            translated_tokens (torch.Tensor):
+                The tokens of the translated context.
+            translated_context (str):
+                The translated context.
+            cross_attentions (torch.Tensor):
+                The cross attentions of the translated context.
+
+        Returns:
+            pair of ints:
+                The start and end character index of the answer in the
+                translated context.
+        '''
+        # Abbreviate `char_start_idx` and `char_end_idx`
+        char_s, char_e = char_start_idx, char_end_idx
+
+        # Use the character mapping to convert the character indices
+        # to token indices
+        token_s = [idx for idx, (start, end) in enumerate(charmap)
+                   if start <= char_s and char_s < end][0]
+        token_e = max([idx for idx, (start, _) in enumerate(charmap)
+                       if start < char_e])
+
+        # Extract the translated token IDs
+        idxs = extract_translated_answer(
+            answer_token_idxs=range(token_s, token_e + 1),
+            cross_attention_tensor=cross_attentions
+        )
+
+        # Attach extra tokens to the translated tokens, to "complete
+        # the last word". This adds tokens until punctuation or a space
+        # is met.
+        token_strings = (
+            self.translation_tokenizer.convert_ids_to_tokens(translated_tokens)
+        )
+        regex = '(▁.*|[.,:;]+.*)'
+        while not (max(idxs) + 1 == len(token_strings) or
+                   re.match(regex, token_strings[max(idxs) + 1])):
+            idxs.append(max(idxs) + 1)
+
+        # Convert the token IDs to character IDs
+        min_token_idx = min(idxs)
+        max_token_idx = max(idxs)
+        min_char_idx = translated_charmap[min_token_idx][0]
+        max_char_idx = translated_charmap[max_token_idx][1]
+
+        # Ensure that the answer does not start with a space
+        while translated_context[min_char_idx] in ' ("':
+            min_char_idx += 1
+
+        # Ensure that the answer does not end with punctuation or a
+        # space
+        while translated_context[max_char_idx - 1] in ' .,:;)"':
+            max_char_idx -= 1
+
+        return min_char_idx, max_char_idx
 
     def translate_dataset(self,
                           dataset_id: str = 'squad_v2',
@@ -102,18 +212,18 @@ class Texas:
                                                          desc=desc,
                                                          leave=False)):
 
-                    # print()
-                    # print(f'"{sentence}"')
-                    # print()
-
-                    # Tokenize the sentence
-                    tokens = tokenizer(sentence, return_tensors='pt')
-                    tokens = tokens['input_ids']
+                    # Translate the tokenized sentence
+                    translation, tokens, translated_tokens = self._translate(
+                        doc=sentence,
+                        target_language=target_language,
+                        return_tokens=True
+                    )
 
                     # Get a mapping between the token IDs and the character
                     # intervals over which the token ranges over
-                    token_strings = (tokenizer
-                                     .convert_ids_to_tokens(tokens[0]))
+                    token_strings = (
+                        tokenizer.convert_ids_to_tokens(tokens[0])
+                    )
                     local_charmap = list()
                     if sent_idx == 0:
                         local_charmap.append((charstart, charstart))
@@ -128,11 +238,6 @@ class Texas:
                     if sent_idx == len(sentences) - 1:
                         last_idx = local_charmap[-1][-1]
                         local_charmap.append((last_idx, last_idx))
-
-                    # Translate the tokenized sentence
-                    bos_token = tokenizer.get_lang_id(target_language)
-                    params = dict(forced_bos_token_id=bos_token)
-                    translated_tokens = model.generate(tokens, **params)
 
                     # Get a mapping between the translated token IDs and the
                     # character intervals over which the token ranges over
@@ -155,11 +260,6 @@ class Texas:
                     if sent_idx == len(sentences) - 1:
                         last_idx = translated_local_charmap[-1][-1]
                         translated_local_charmap.append((last_idx, last_idx))
-
-                    # Decode the translated tokens
-                    params = dict(skip_special_tokens=True)
-                    translation = tokenizer.batch_decode(translated_tokens,
-                                                         **params)[0]
 
                     # Append the translation to the context
                     all_translations.append(translation)
@@ -202,78 +302,161 @@ class Texas:
                          translated_charmap)
                 self.cache = cache
 
-            # Get the cross attentions
-            dec_in_ids = translated_tokens.unsqueeze(0)
-            cross_attentions = (model.forward(tokens,
-                                              decoder_input_ids=dec_in_ids,
-                                              output_attentions=True)
-                                     .cross_attentions[0][0])
+            # Translate the question
+            translated_question = self._translate(
+                doc=example['question'],
+                target_language=target_language
+            )
 
-            # Get the answer token IDs
-            answers = dict(text=list(), answer_start=list())
+            # Iterate over all the answers
+            computed_cross_attentions = False
+            answers = dict(text=list(),
+                           answer_start=list(),
+                           extraction_method=list())
             for answer, char_s in zip(example['answers']['text'],
                                       example['answers']['answer_start']):
-                char_e = char_s + len(answer)
-                token_s = [idx for idx, (start, end) in enumerate(charmap)
-                           if start <= char_s and char_s < end][0]
-                token_e = [idx for idx, (start, end) in enumerate(charmap)
-                           if start <= char_e and char_e < end][0]
 
-                # Extract the translated token IDs
-                idxs = extract_translated_answer(
-                    answer_token_idx_start=token_s,
-                    answer_token_idx_end=token_e,
-                    cross_attention_tensor=cross_attentions
+
+                # CASE 1: Check if the (non-translated) answer appears uniquely
+                # in the translated context
+                if translated_context.lower().count(answer.lower()) == 1:
+                    answer_start = (translated_context.lower()
+                                                      .index(answer.lower()))
+                    answers['answer_start'].append(answer_start)
+                    answers['text'].append(answer)
+                    answers['extraction_method'].append('unique')
+                    continue
+
+
+                # CASE 2: Check if the translated answer appears uniquely in
+                # the translated context
+                translated_answer = self._translate(
+                    doc=answer,
+                    target_language=target_language
                 )
+                if (translated_context.lower()
+                                      .count(translated_answer.lower()) == 1):
+                    answer_start = (translated_context
+                                    .lower()
+                                    .index(translated_answer.lower()))
+                    answer_end = answer_start + len(translated_answer)
+                    answer = translated_context[answer_start:answer_end]
+                    answers['answer_start'].append(answer_start)
+                    answers['text'].append(answer)
+                    answers['extraction_method'].append('translated_unique')
+                    continue
 
-                # Attach extra tokens to the translated tokens, to "complete
-                # the last word". This adds tokens until punctuation or a space
-                # is met.
-                regex = '(▁.*|[.,:;]+)'
-                token_strings = (
-                    tokenizer.convert_ids_to_tokens(translated_tokens)
+
+                # CASE 3: Check if the (non-translated) answer appears at all
+                # in the translated context
+                if answer.lower() in translated_context.lower():
+
+                    # Get the cross attentions
+                    if not computed_cross_attentions:
+                        dec_in_ids = translated_tokens.unsqueeze(0)
+                        outputs = model.forward(
+                            tokens,
+                            decoder_input_ids=dec_in_ids,
+                            output_attentions=True
+                        )
+                        cross_attentions = outputs.cross_attentions[0][0]
+                        computed_cross_attentions = True
+
+                    # Use the cross attentions to find the rough location of
+                    # the (non-translated) answer
+                    s, e = self._extract_answer(
+                        char_start_idx=char_s - 50,
+                        char_end_idx=char_s + len(answer) + 50,
+                        charmap=charmap,
+                        translated_charmap=translated_charmap,
+                        translated_tokens=translated_tokens,
+                        translated_context=translated_context,
+                        cross_attentions=cross_attentions
+                    )
+
+                    translated_ctx_segment = translated_context.lower()[s:e]
+                    if translated_ctx_segment.count(answer.lower()) == 1:
+                        answer_start = (translated_ctx_segment
+                                        .lower()
+                                        .index(answer.lower())) + s
+                        answers['answer_start'].append(answer_start)
+                        answers['text'].append(answer)
+                        answers['extraction_method'].append('att+unique')
+                        continue
+
+
+                # CASE 4: Check if the translated answer appears at all in the
+                # translated context
+                if translated_answer.lower() in translated_context.lower():
+
+                    # Get the cross attentions
+                    if not computed_cross_attentions:
+                        dec_in_ids = translated_tokens.unsqueeze(0)
+                        outputs = model.forward(
+                            tokens,
+                            decoder_input_ids=dec_in_ids,
+                            output_attentions=True
+                        )
+                        cross_attentions = outputs.cross_attentions[0][0]
+                        computed_cross_attentions = True
+
+                    # Use the cross attentions to find the rough location of
+                    # the translated answer
+                    s, e = self._extract_answer(
+                        char_start_idx=char_s - 50,
+                        char_end_idx=char_s + len(answer) + 50,
+                        charmap=charmap,
+                        translated_charmap=translated_charmap,
+                        translated_tokens=translated_tokens,
+                        translated_context=translated_context,
+                        cross_attentions=cross_attentions
+                    )
+
+                    translated_ctx_segment = translated_context[s:e]
+                    if (translated_ctx_segment
+                            .lower()
+                            .count(translated_answer.lower()) == 1):
+                        answer_start = (translated_ctx_segment
+                                        .lower()
+                                        .index(translated_answer.lower())) + s
+                        method = 'att+translated_unique'
+                        answers['answer_start'].append(answer_start)
+                        answers['text'].append(translated_answer)
+                        answers['extraction_method'].append(method)
+                        continue
+
+
+                # CASE 5: Use cross-attentions to find the answer in the
+                # translated context
+
+                # Get the cross attentions
+                if not computed_cross_attentions:
+                    dec_in_ids = translated_tokens.unsqueeze(0)
+                    outputs = model.forward(
+                        tokens,
+                        decoder_input_ids=dec_in_ids,
+                        output_attentions=True
+                    )
+                    cross_attentions = outputs.cross_attentions[0][0]
+                    computed_cross_attentions = True
+
+                # Use the cross attentions to find the rough location of
+                # the translated answer
+                s, e = self._extract_answer(
+                    char_start_idx=char_s,
+                    char_end_idx=char_s + len(answer),
+                    charmap=charmap,
+                    translated_charmap=translated_charmap,
+                    translated_tokens=translated_tokens,
+                    translated_context=translated_context,
+                    cross_attentions=cross_attentions
                 )
-                while not (max(idxs) + 1 == len(token_strings) or
-                           re.match(regex, token_strings[max(idxs) + 1])):
-                    idxs.append(max(idxs) + 1)
-
-                # Convert the token IDs to character IDs
-                min_token_idx = min(idxs)
-                max_token_idx = max(idxs)
-                min_char_idx = translated_charmap[min_token_idx][0]
-                max_char_idx = translated_charmap[max_token_idx][1]
-
-                # Ensure that the answer does not start with a space
-                if translated_context[min_char_idx] == ' ':
-                    min_char_idx += 1
-
-                # Ensure that the answer does not end with punctuation or a
-                # space
-                if translated_context[max_char_idx - 1] in ' .,:;':
-                    max_char_idx -= 1
-
-                # pred_toks = [ctx[s:e] for s, e in charmap]
-                # true_toks = tokenizer.convert_ids_to_tokens(tokens)
-                # print(list(zip(pred_toks, true_toks)))
-
-                # pred_toks = [translated_context[s:e] for s, e in translated_charmap]
-                # true_toks = tokenizer.convert_ids_to_tokens(translated_tokens)
-                # print(list(zip(pred_toks, true_toks)))
 
                 # Store the translated answer
-                answer = translated_context[min_char_idx:max_char_idx]
+                answer = translated_context[s:e]
                 answers['text'].append(answer)
-                answers['answer_start'].append(min_char_idx)
-
-            # Translate the question
-            question = example['question']
-            tokens = tokenizer(question, return_tensors='pt')['input_ids']
-            bos_token = tokenizer.get_lang_id(target_language)
-            params = dict(forced_bos_token_id=bos_token)
-            translated_tokens = model.generate(tokens, **params)
-            params = dict(skip_special_tokens=True)
-            translated_question = tokenizer.batch_decode(translated_tokens,
-                                                         **params)[0]
+                answers['answer_start'].append(s)
+                answers['extraction_method'].append('cross-attention')
 
             # Store the translated example
             new_example = dict(
@@ -281,7 +464,8 @@ class Texas:
                 title=example['title'],
                 context=translated_context,
                 question=translated_question,
-                answers=answers
+                answers=answers,
+                original_dataset=dataset_id
             )
 
             # Append the translated example to the JSONL file
