@@ -108,6 +108,9 @@ class Texas:
                 The start and end character index of the answer in the
                 translated context.
         '''
+        if translated_context == '':
+            return 0, 0
+
         # Abbreviate `char_start_idx` and `char_end_idx`
         char_s, char_e = char_start_idx, char_end_idx
 
@@ -138,10 +141,10 @@ class Texas:
         # Convert the token IDs to character IDs
         min_token_idx = min(idxs)
         max_token_idx = max(idxs)
-        min_char_idx = min(translated_charmap[min_token_idx][0],
-                           len(translated_context))
-        max_char_idx = min(translated_charmap[max_token_idx][1],
-                           len(translated_context))
+        min_char_idx = max(0, min(translated_charmap[min_token_idx][0],
+                                  len(translated_context)))
+        max_char_idx = max(0, min(translated_charmap[max_token_idx][1],
+                                  len(translated_context)))
 
         # Ensure that the answer does not start with a space
         while translated_context[min_char_idx] in ' ("':
