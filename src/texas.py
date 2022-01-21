@@ -170,6 +170,7 @@ class Texas:
                 shape (num_attention_heads, num_translated_tokens, num_tokens).
         '''
         with torch.no_grad():
+            model = self.translation_model
             dec_in_ids = translated_tokens.unsqueeze(0)
             try:
                 outputs = model.forward(
