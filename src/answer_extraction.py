@@ -5,20 +5,16 @@ import torch
 from typing import List
 
 
-def extract_translated_answer(answer_token_idx_start: int,
-                              answer_token_idx_end: int,
+def extract_translated_answer(answer_token_idxs: List[int],
                               cross_attention_tensor: Tensor,
                               beam_width: int = 100,
-                              beam_radius: int = 2) -> List[int]:
+                              beam_radius: int = 3,
+                              max_attention_sum: int = 10) -> List[int]:
     '''Extracts the location of the answer in the translated document.
 
     Args:
-        answer_token_idx_start (int):
-            The index of the first token of the answer in the original
-            document.
-        answer_token_idx_end (int):
-            The index of the last token of the answer in the original
-            document.
+        answer_token_idxs (list of ints):
+            The token indices of the answer in the original context.
         cross_attention_tensor (PyTorch Tensor):
             The first cross-attention tensor, of shape (attention_heads,
             num_target_tokens, num_source_tokens).
@@ -27,7 +23,10 @@ def extract_translated_answer(answer_token_idx_start: int,
             memory at every token step. Defaults to 100.
         beam_radius (int, optional):
             The radius of the beam, i.e., the maximal number of tokens between
-            consecutive translated tokens. Defaults to 2.
+            consecutive translated tokens. Defaults to 3.
+        max_attention_sum (int, optional):
+            The maximal sum of attention values that will be considered for
+            the answer. Defaults to 10.
 
     Returns:
         list of int:
@@ -41,7 +40,7 @@ def extract_translated_answer(answer_token_idx_start: int,
         beam_width = min(beam_width, cross_attention_tensor.size(1))
 
         # Abbreviate wordy variable names
-        s, e = answer_token_idx_start, answer_token_idx_end
+        s, e = min(answer_token_idxs), max(answer_token_idxs)
 
         # Extract all the cross-attention values for the answer.
         # This has shape (attention_heads, num_target_tokens, answer),
@@ -51,6 +50,15 @@ def extract_translated_answer(answer_token_idx_start: int,
         # Use the attention head with the highest value for each token.
         # This has shape (num_target_tokens, answer).
         att_values = att_values.max(dim=0)[0]
+
+        # Set the attention values we're not interested in to 0.
+        mask = [i not in answer_token_idxs for i in range(s, e + 1)]
+        att_values[:, mask] = 0.
+
+        # Remove the tokens in the answer which have a large sum of attention
+        # values, as these tend to be irrelevant words like 'the' or 'a'.
+        mask = att_values.sum(dim=0).gt(max_attention_sum)
+        att_values[:, mask] = 0.
 
         # Start of beam search.
         # For the first token, we simply take the top `beam_width` best tokens,
@@ -86,7 +94,7 @@ def extract_translated_answer(answer_token_idx_start: int,
                 # include the attention values for the tokens that are at most
                 # five tokens away from that last token.
                 last_beam_idx = beam_idx_tensor[-1]
-                att_start = max(0, last_beam_idx - beam_radius)
+                att_start = max(0, last_beam_idx)
                 att_end = min(att_values.shape[0],
                               last_beam_idx + beam_radius + 1)
 
