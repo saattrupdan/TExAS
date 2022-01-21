@@ -477,9 +477,10 @@ class Texas:
                         answer_end = answer_start + len(translated_answer)
                         if (answer_end >= len(translated_context) or
                                 translated_context[answer_end] in '[ !?.,:;]'):
+                            ans = translated_context[answer_start:answer_end]
                             method = 'att+translated_unique'
                             answers['answer_start'].append(answer_start)
-                            answers['text'].append(translated_answer)
+                            answers['text'].append(ans)
                             answers['extraction_method'].append(method)
                             continue
 
