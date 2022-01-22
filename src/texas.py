@@ -83,7 +83,8 @@ class Texas:
                         translated_charmap: List[Tuple[int, int]],
                         translated_tokens: torch.Tensor,
                         translated_context: str,
-                        cross_attentions: torch.Tensor) -> Tuple[int, int]:
+                        cross_attentions: torch.Tensor,
+                        return_token_indices: bool = False) -> Tuple[int, int]:
         '''Extract the answer from the translated context.
 
         Args:
@@ -101,6 +102,9 @@ class Texas:
                 The translated context.
             cross_attentions (torch.Tensor):
                 The cross attentions of the translated context.
+            return_token_indices (bool):
+                Whether to also return the indices of the tokens in the
+                translated context.
 
         Returns:
             pair of ints:
@@ -151,7 +155,10 @@ class Texas:
         while translated_context[max_char_idx - 1] in ' !?.,:;)("':
             max_char_idx -= 1
 
-        return min_char_idx, max_char_idx
+        if return_token_indices:
+            return min_char_idx, max_char_idx, min_token_idx, max_token_idx
+        else:
+            return min_char_idx, max_char_idx
 
     def _compute_cross_attentions(self,
                                   tokens: torch.Tensor,
@@ -407,6 +414,7 @@ class Texas:
 
             # Iterate over all the answers
             computed_cross_attentions = False
+            computed_s_and_e = False
             answers = dict(text=list(),
                            answer_start=list(),
                            extraction_method=list())
@@ -462,16 +470,20 @@ class Texas:
                         computed_cross_attentions = True
 
                     # Use the cross attentions to find the rough location of
-                    # the (non-translated) answer
-                    s, e = self._extract_answer(
-                        char_start_idx=max(0, char_s - 10),
-                        char_end_idx=min(len(ctx), char_s + len(answer) + 10),
-                        charmap=charmap,
-                        translated_charmap=translated_charmap,
-                        translated_tokens=translated_tokens,
-                        translated_context=translated_context,
-                        cross_attentions=cross_attentions
-                    )
+                    # the answer
+                    if not computed_s_and_e:
+                        s, e, ts, te = self._extract_answer(
+                            char_start_idx=max(0, char_s - 10),
+                            char_end_idx=min(len(ctx),
+                                             char_s + len(answer) + 10),
+                            charmap=charmap,
+                            translated_charmap=translated_charmap,
+                            translated_tokens=translated_tokens,
+                            translated_context=translated_context,
+                            cross_attentions=cross_attentions,
+                            return_token_indices=True
+                        )
+                        computed_s_and_e = True
 
                     translated_ctx_segment = translated_context[s:e]
                     if (translated_ctx_segment
@@ -502,16 +514,20 @@ class Texas:
                         computed_cross_attentions = True
 
                     # Use the cross attentions to find the rough location of
-                    # the translated answer
-                    s, e = self._extract_answer(
-                        char_start_idx=max(0, char_s - 10),
-                        char_end_idx=min(len(ctx), char_s + len(answer) + 10),
-                        charmap=charmap,
-                        translated_charmap=translated_charmap,
-                        translated_tokens=translated_tokens,
-                        translated_context=translated_context,
-                        cross_attentions=cross_attentions
-                    )
+                    # the answer
+                    if not computed_s_and_e:
+                        s, e, ts, te = self._extract_answer(
+                            char_start_idx=max(0, char_s - 10),
+                            char_end_idx=min(len(ctx),
+                                             char_s + len(answer) + 10),
+                            charmap=charmap,
+                            translated_charmap=translated_charmap,
+                            translated_tokens=translated_tokens,
+                            translated_context=translated_context,
+                            cross_attentions=cross_attentions,
+                            return_token_indices=True
+                        )
+                        computed_s_and_e = True
 
                     translated_ctx_segment = translated_context[s:e]
                     if (translated_ctx_segment
@@ -543,19 +559,39 @@ class Texas:
                     computed_cross_attentions = True
 
                 # Use the cross attentions to find the rough location of
-                # the translated answer
-                s, e = self._extract_answer(
+                # the answer
+                if not computed_s_and_e:
+                    s, e, ts, te = self._extract_answer(
+                        char_start_idx=max(0, char_s - 10),
+                        char_end_idx=min(len(ctx), char_s + len(answer) + 10),
+                        charmap=charmap,
+                        translated_charmap=translated_charmap,
+                        translated_tokens=translated_tokens,
+                        translated_context=translated_context,
+                        cross_attentions=cross_attentions,
+                        return_token_indices=True
+                    )
+                    computed_s_and_e = True
+
+                # Zero the cross-attention values at tokens outside the
+                # (ts, te) interval
+                cross_attentions[:, :, ts:te] = 0.
+
+                # Use the cross attentions to find the location of the
+                # translated answer
+                precise_s, precise_e = self._extract_answer(
                     char_start_idx=max(0, char_s),
                     char_end_idx=min(len(ctx), char_s + len(answer)),
                     charmap=charmap,
                     translated_charmap=translated_charmap,
                     translated_tokens=translated_tokens,
                     translated_context=translated_context,
-                    cross_attentions=cross_attentions
+                    cross_attentions=cross_attentions,
+                    return_token_indices=True
                 )
 
                 # Store the translated answer
-                answer = translated_context[s:e]
+                answer = translated_context[precise_s:precise_e]
                 answers['text'].append(answer)
                 answers['answer_start'].append(s)
                 answers['extraction_method'].append('cross-attention')
@@ -602,8 +638,8 @@ if __name__ == '__main__':
     params = dict(dataset_id='deepset/germanquad',
                   target_language='da',
                   sentence_splitter='de_core_news_sm',
-                  title_fn=lambda x: x['context'].split('===')[0].strip('\n' ),
+                  title_fn=lambda x: x['context'].split('===')[0].strip('\n'),
                   context_fn=lambda x: x['context'].split('===')[-1]
-                                                   .strip('\n' ))
+                                                   .strip('\n'))
     for split in ['train', 'test']:
         texas.translate_dataset(split=split, **params)
