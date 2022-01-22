@@ -139,9 +139,9 @@ class Texas:
         min_token_idx = min(idxs)
         max_token_idx = max(idxs)
         min_char_idx = max(0, min(translated_charmap[min_token_idx][0],
-                                  len(translated_context)))
+                                  len(translated_context) - 1))
         max_char_idx = max(0, min(translated_charmap[max_token_idx][1],
-                                  len(translated_context)))
+                                  len(translated_context) - 1))
 
         # Ensure that the answer does not start with a space
         try:
