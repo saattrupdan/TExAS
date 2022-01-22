@@ -159,6 +159,9 @@ class Texas:
                translated_context[min_char_idx] in ' !?.,:;)("\''):
             min_char_idx += 1
 
+        # Scale the attention value to be the mean token attention value
+        value /= max_token_idx - min_token_idx
+
         if return_token_indices:
             return (min_char_idx,
                     max_char_idx,
