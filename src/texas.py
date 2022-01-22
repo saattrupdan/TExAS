@@ -477,9 +477,9 @@ class Texas:
                     # the answer
                     if not computed_s_and_e:
                         s, e, ts, te = self._extract_answer(
-                            char_start_idx=max(0, char_s - 10),
+                            char_start_idx=max(0, char_s - 20),
                             char_end_idx=min(len(ctx),
-                                             char_s + len(answer) + 10),
+                                             char_s + len(answer) + 20),
                             charmap=charmap,
                             translated_charmap=translated_charmap,
                             translated_tokens=translated_tokens,
@@ -521,9 +521,9 @@ class Texas:
                     # the answer
                     if not computed_s_and_e:
                         s, e, ts, te = self._extract_answer(
-                            char_start_idx=max(0, char_s - 10),
+                            char_start_idx=max(0, char_s - 20),
                             char_end_idx=min(len(ctx),
-                                             char_s + len(answer) + 10),
+                                             char_s + len(answer) + 20),
                             charmap=charmap,
                             translated_charmap=translated_charmap,
                             translated_tokens=translated_tokens,
@@ -566,8 +566,8 @@ class Texas:
                 # the answer
                 if not computed_s_and_e:
                     s, e, ts, te = self._extract_answer(
-                        char_start_idx=max(0, char_s - 10),
-                        char_end_idx=min(len(ctx), char_s + len(answer) + 10),
+                        char_start_idx=max(0, char_s - 20),
+                        char_end_idx=min(len(ctx), char_s + len(answer) + 20),
                         charmap=charmap,
                         translated_charmap=translated_charmap,
                         translated_tokens=translated_tokens,
