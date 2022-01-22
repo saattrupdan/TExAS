@@ -144,23 +144,13 @@ class Texas:
                                   len(translated_context) - 1))
 
         # Ensure that the answer does not start with a space
-        try:
-            while translated_context[min_char_idx] in ' ("':
-                min_char_idx += 1
-        except:
-            print('min_char_idx=', min_char_idx)
-            print('max_char_idx=', max_char_idx)
-            breakpoint()
+        while translated_context[min_char_idx] in ' ("':
+            min_char_idx += 1
 
         # Ensure that the answer does not end with punctuation or a
         # space
-        try:
-            while translated_context[max_char_idx - 1] in ' !?.,:;)"':
-                max_char_idx -= 1
-        except:
-            print('min_char_idx=', min_char_idx)
-            print('max_char_idx=', max_char_idx)
-            breakpoint()
+        while translated_context[max_char_idx - 1] in ' !?.,:;)"':
+            max_char_idx -= 1
 
         return min_char_idx, max_char_idx
 
