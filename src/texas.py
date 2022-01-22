@@ -7,7 +7,7 @@ This is an implementation of the model described in the paper:
 import json
 from pathlib import Path
 from tqdm.auto import tqdm
-from datasets import load_dataset
+from datasets import load_dataset, Dataset
 from transformers import M2M100Tokenizer, M2M100ForConditionalGeneration
 import spacy
 import re
@@ -108,9 +108,6 @@ class Texas:
                 The start and end character index of the answer in the
                 translated context.
         '''
-        if translated_context == '':
-            return 0, 0
-
         # Abbreviate `char_start_idx` and `char_end_idx`
         char_s, char_e = char_start_idx, char_end_idx
 
@@ -147,13 +144,23 @@ class Texas:
                                   len(translated_context)))
 
         # Ensure that the answer does not start with a space
-        while translated_context[min_char_idx] in ' ("':
-            min_char_idx += 1
+        try:
+            while translated_context[min_char_idx] in ' ("':
+                min_char_idx += 1
+        except:
+            print('min_char_idx=', min_char_idx)
+            print('max_char_idx=', max_char_idx)
+            breakpoint()
 
         # Ensure that the answer does not end with punctuation or a
         # space
-        while translated_context[max_char_idx - 1] in ' !?.,:;)"':
-            max_char_idx -= 1
+        try:
+            while translated_context[max_char_idx - 1] in ' !?.,:;)"':
+                max_char_idx -= 1
+        except:
+            print('min_char_idx=', min_char_idx)
+            print('max_char_idx=', max_char_idx)
+            breakpoint()
 
         return min_char_idx, max_char_idx
 
@@ -224,10 +231,10 @@ class Texas:
 
         # Initialise the dataset streaming
         dataset = load_dataset(dataset_id, split=split)
+        dataset = Dataset.from_dict(dataset[1700:])
 
         # Shortened variables for the translation model
         tokenizer = self.translation_tokenizer
-        model = self.translation_model
         nlp = self.sentence_splitter
 
         # Iterate over the dataset
