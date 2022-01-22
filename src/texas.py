@@ -584,11 +584,11 @@ if __name__ == '__main__':
     #     texas.translate_dataset(split=split, **params)
 
     # Adversarial QA
-    params = dict(dataset_id='adversarial_qa',
-                  dataset_subset_id='adversarialQA',
-                  target_language='da')
-    for split in ['train', 'validation', 'test']:
-        texas.translate_dataset(split=split, **params)
+    # params = dict(dataset_id='adversarial_qa',
+    #               dataset_subset_id='adversarialQA',
+    #               target_language='da')
+    # for split in ['train', 'validation', 'test']:
+    #     texas.translate_dataset(split=split, **params)
 
     # SberQuAD
     params = dict(dataset_id='sber_squad',
