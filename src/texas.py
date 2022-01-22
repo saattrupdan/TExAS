@@ -12,7 +12,7 @@ from transformers import M2M100Tokenizer, M2M100ForConditionalGeneration
 import spacy
 import re
 import torch
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Callable
 from answer_extraction import extract_translated_answer
 
 
@@ -191,10 +191,17 @@ class Texas:
             cross_attentions = outputs.cross_attentions[0][0].cpu()
             return cross_attentions
 
-    def translate_dataset(self,
-                          dataset_id: str = 'squad_v2',
-                          split: str = 'train',
-                          target_language: str = 'da'):
+    def translate_dataset(
+            self,
+            dataset_id: str = 'squad_v2',
+            split: str = 'train',
+            target_language: str = 'da',
+            context_fn: Callable = lambda x: x['context'],
+            question_fn: Callable = lambda x: x['question'],
+            answer_fn: Callable = lambda x: x['answers']['text'],
+            answer_idx_fn: Callable = lambda x: x['answers']['answer_start'],
+            id_fn: Callable = lambda x: x['id'],
+            title_fn: Callable = lambda x: x['title']):
         '''Translate a SQuAD-like QA dataset.
 
         This will store the translated dataset in
@@ -208,6 +215,30 @@ class Texas:
                 The split of the dataset to translate. Defaults to 'train'.
             target_language (str, optional):
                 The target language of the translation. Defaults to 'da'.
+            context_fn (callable, optional):
+                A function that extracts the context from a dataset example.
+                Defaults to `lambda x: x['context']`, corresponding to the
+                standard SQuAD setup.
+            question_fn (callable, optional):
+                A function that extracts the question from a dataset example.
+                Defaults to `lambda x: x['question']`, corresponding to the
+                standard SQuAD setup.
+            answer_fn (callable, optional):
+                A function that extracts the answer from a dataset example.
+                Defaults to `lambda x: x['answers']['text']`, corresponding
+                to the standard SQuAD setup.
+            answer_idx_fn (callable, optional):
+                A function that extracts the answer index from a dataset
+                example. Defaults to `lambda x: x['answers']['answer_start']`,
+                corresponding to the standard SQuAD setup.
+            id_fn (callable, optional):
+                A function that extracts the ID from a dataset example.
+                Defaults to `lambda x: x['id']`, corresponding to the standard
+                SQuAD setup.
+            title_fn (callable, optional):
+                A function that extracts the title from a dataset example.
+                Defaults to `lambda x: x['title']`, corresponding to the
+                standard SQuAD setup.
         '''
         # Set up the target JSONL file
         path = Path(f'{dataset_id}-{split}-{target_language}.jsonl')
@@ -231,7 +262,7 @@ class Texas:
         for example in tqdm(dataset, desc=desc, total=len(dataset)):
 
             # Get the context
-            ctx = example['context']
+            ctx = context_fn(example)
 
             # If the context has already been translated, load the
             # translated context
@@ -355,7 +386,7 @@ class Texas:
 
             # Translate the question
             translated_question = self._translate(
-                doc=example['question'],
+                doc=question_fn(example),
                 target_language=target_language
             )
 
@@ -364,9 +395,8 @@ class Texas:
             answers = dict(text=list(),
                            answer_start=list(),
                            extraction_method=list())
-            for answer, char_s in zip(example['answers']['text'],
-                                      example['answers']['answer_start']):
-
+            for answer, char_s in zip(answer_fn(example),
+                                      answer_idx_fn(example)):
 
                 # CASE 1: Check if the (non-translated) answer appears uniquely
                 # in the translated context
@@ -517,8 +547,8 @@ class Texas:
 
             # Store the translated example
             new_example = dict(
-                id=example['id'],
-                title=example['title'],
+                id=id_fn(example),
+                title=title_fn(example),
                 context=translated_context,
                 question=translated_question,
                 answers=answers,
