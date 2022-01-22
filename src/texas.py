@@ -7,7 +7,7 @@ This is an implementation of the model described in the paper:
 import json
 from pathlib import Path
 from tqdm.auto import tqdm
-from datasets import load_dataset, Dataset
+from datasets import load_dataset
 from transformers import M2M100Tokenizer, M2M100ForConditionalGeneration
 import spacy
 import re
