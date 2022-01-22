@@ -640,7 +640,8 @@ if __name__ == '__main__':
         context_prefix_len = len('==='.join(context_prefixes))
         context = example['context'].split('===')[-1]
         num_context_newlines = len(context) - len(context.strip('\n'))
-        return answer_start - context_prefix_len - num_context_newlines
+        return [start_idx - context_prefix_len - num_context_newlines
+                for start_idx in answer_start]
     context_fn = lambda x: x['context'].split('===')[-1].strip('\n')
     params = dict(dataset_id='deepset/germanquad',
                   target_language='da',
