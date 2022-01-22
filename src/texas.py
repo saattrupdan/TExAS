@@ -272,7 +272,6 @@ class Texas:
 
         # Initialise the dataset streaming
         dataset = load_dataset(dataset_id, dataset_subset_id, split=split)
-        breakpoint()
 
         # Shortened variables for the translation model
         tokenizer = self.translation_tokenizer
@@ -635,9 +634,14 @@ if __name__ == '__main__':
     #     texas.translate_dataset(split=split, **params)
 
     # GermanQuAD
+    context_fn = lambda x: x['context'].split('===')[-1].strip('\n')
+    answer_idx_fn = (lambda x: x['answers']['answer_start'] +
+                               len('==='.join(x['context'].split('===')[:-1])))
     params = dict(dataset_id='deepset/germanquad',
                   target_language='da',
                   sentence_splitter='de_core_news_sm',
-                  title_fn=lambda x: x['context'].split('===')[0].strip('\n'))
+                  title_fn=lambda x: x['context'].split('===')[0].strip('\n'),
+                  context_fn=context_fn,
+                  answer_idx_fn=answer_idx_fn)
     for split in ['train', 'test']:
         texas.translate_dataset(split=split, **params)
