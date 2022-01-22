@@ -601,6 +601,7 @@ if __name__ == '__main__':
     # GermanQuAD
     params = dict(dataset_id='deepset/germanquad',
                   target_language='da',
-                  sentence_splitter='de_core_news_sm')
+                  sentence_splitter='de_core_news_sm',
+                  title_fn=lambda _: 'germanquad')
     for split in ['train', 'test']:
         texas.translate_dataset(split=split, **params)
