@@ -221,7 +221,6 @@ class Texas:
 
         # Initialise the dataset streaming
         dataset = load_dataset(dataset_id, split=split)
-        dataset = Dataset.from_dict(dataset[1700:])
 
         # Shortened variables for the translation model
         tokenizer = self.translation_tokenizer
