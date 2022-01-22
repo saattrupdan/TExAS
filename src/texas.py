@@ -112,8 +112,13 @@ class Texas:
 
         # Use the character mapping to convert the character indices
         # to token indices
-        token_s = [idx for idx, (start, end) in enumerate(charmap)
-                   if start <= char_s and char_s < end][0]
+        try:
+            token_s = [idx for idx, (start, end) in enumerate(charmap)
+                       if start <= char_s and char_s < end][0]
+        except:
+            token_s = [idx for idx, (start, end) in enumerate(charmap)
+                       if start <= char_s and char_s < end]
+            breakpoint()
         token_e = max([idx for idx, (start, _) in enumerate(charmap)
                        if start < char_e])
 
@@ -591,11 +596,11 @@ if __name__ == '__main__':
     #     texas.translate_dataset(split=split, **params)
 
     # SberQuAD
-    params = dict(dataset_id='sberquad',
-                  target_language='da',
-                  sentence_splitter='ru_core_news_sm')
-    for split in ['train', 'validation', 'test']:
-        texas.translate_dataset(split=split, **params)
+    # params = dict(dataset_id='sberquad',
+    #               target_language='da',
+    #               sentence_splitter='ru_core_news_sm')
+    # for split in ['train', 'validation', 'test']:
+    #     texas.translate_dataset(split=split, **params)
 
     # GermanQuAD
     params = dict(dataset_id='deepset/germanquad',
