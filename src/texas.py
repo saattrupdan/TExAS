@@ -193,6 +193,7 @@ class Texas:
     def translate_dataset(
             self,
             dataset_id: str = 'squad_v2',
+            dataset_subset_id: Optional[str] = None,
             split: str = 'train',
             target_language: str = 'da',
             sentence_splitter: str = 'en_core_web_sm',
@@ -211,6 +212,10 @@ class Texas:
             dataset_id (str, optional):
                 The dataset to translate. Must be a HuggingFace dataset ID.
                 Defaults to 'squad_v2'.
+            dataset_subset_id (str or None, optional):
+                The subset of the dataset to translate, if there are multiple
+                to choose between. If None, it is assumed that there is only
+                one subset. Defaults to None.
             split (str, optional):
                 The split of the dataset to translate. Defaults to 'train'.
             target_language (str, optional):
@@ -244,7 +249,11 @@ class Texas:
                 standard SQuAD setup.
         '''
         # Set up the target JSONL file
-        path = Path(f'{dataset_id}-{split}-{target_language}.jsonl')
+        if dataset_subset_id is None:
+            dataset_name = dataset_id
+        else:
+            dataset_name = f'{dataset_id}-{dataset_subset_id}'
+        path = Path(f'{dataset_name}-{split}-{target_language}.jsonl')
 
         # If the file already exists, raise an exception
         if path.exists():
@@ -254,7 +263,7 @@ class Texas:
         path.touch()
 
         # Initialise the dataset streaming
-        dataset = load_dataset(dataset_id, split=split)
+        dataset = load_dataset(dataset_id, dataset_subset_id, split=split)
 
         # Shortened variables for the translation model
         tokenizer = self.translation_tokenizer
@@ -263,7 +272,7 @@ class Texas:
         nlp = spacy.load(sentence_splitter)
 
         # Iterate over the dataset
-        desc = f'Translating the {split} split of {dataset_id}'
+        desc = f'Translating the {split} split of {dataset_name}'
         for example in tqdm(dataset, desc=desc, total=len(dataset)):
 
             # Get the context
@@ -576,6 +585,7 @@ if __name__ == '__main__':
 
     # Adversarial QA
     params = dict(dataset_id='adversarial_qa',
+                  dataset_subset_id='adversarialQA',
                   target_language='da')
     for split in ['train', 'validation', 'test']:
         texas.translate_dataset(split=split, **params)
