@@ -57,6 +57,7 @@ def extract_translated_answer(answer_token_idxs: List[int],
 
         # Remove the tokens in the answer which have a large sum of attention
         # values, as these tend to be irrelevant words like 'the' or 'a'.
+        print(att_values.sum(dim=0))
         mask = att_values.sum(dim=0).gt(max_attention_sum)
         att_values[:, mask] = 0.
 
