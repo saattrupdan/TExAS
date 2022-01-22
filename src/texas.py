@@ -25,7 +25,6 @@ class Texas:
     This is an implementation of the model described in the paper:
         TODO
     '''
-    sentence_splitter = spacy.load('en_core_web_sm')
     translation_tokenizer = (M2M100Tokenizer
                              .from_pretrained('facebook/m2m100_1.2B'))
     translation_model = (M2M100ForConditionalGeneration
@@ -196,6 +195,7 @@ class Texas:
             dataset_id: str = 'squad_v2',
             split: str = 'train',
             target_language: str = 'da',
+            sentence_splitter: str = 'en_core_web_sm',
             context_fn: Callable = lambda x: x['context'],
             question_fn: Callable = lambda x: x['question'],
             answer_fn: Callable = lambda x: x['answers']['text'],
@@ -215,6 +215,9 @@ class Texas:
                 The split of the dataset to translate. Defaults to 'train'.
             target_language (str, optional):
                 The target language of the translation. Defaults to 'da'.
+            sentence_splitter (str, optional):
+                The SpaCy model to use for splitting sentences. Defaults to
+                'en_core_web_sm'.
             context_fn (callable, optional):
                 A function that extracts the context from a dataset example.
                 Defaults to `lambda x: x['context']`, corresponding to the
@@ -255,7 +258,9 @@ class Texas:
 
         # Shortened variables for the translation model
         tokenizer = self.translation_tokenizer
-        nlp = self.sentence_splitter
+
+        # Load the sentence splitter model
+        nlp = spacy.load(sentence_splitter)
 
         # Iterate over the dataset
         desc = f'Translating the {split} split of {dataset_id}'
@@ -562,9 +567,29 @@ class Texas:
 
 if __name__ == '__main__':
     texas = Texas()
-    texas.translate_dataset(dataset_id='squad_v2',
-                            split='train',
-                            target_language='da')
-    texas.translate_dataset(dataset_id='squad_v2',
-                            split='validation',
-                            target_language='da')
+
+    # SQuAD 2.0
+    # params = dict(dataset_id='squad_v2',
+    #               target_language='da')
+    # for split in ['train', 'validation']:
+    #     texas.translate_dataset(split=split, **params)
+
+    # Adversarial QA
+    params = dict(dataset_id='adversarial_qa',
+                  target_language='da')
+    for split in ['train', 'validation', 'test']:
+        texas.translate_dataset(split=split, **params)
+
+    # SberQuAD
+    params = dict(dataset_id='sber_squad',
+                  target_language='da',
+                  sentence_splitter='ru_core_news_sm')
+    for split in ['train', 'validation', 'test']:
+        texas.translate_dataset(split=split, **params)
+
+    # GermanQuAD
+    params = dict(dataset_id='deepset/germanquad',
+                  target_language='da',
+                  sentence_splitter='de_core_news_sm')
+    for split in ['train', 'test']:
+        texas.translate_dataset(split=split, **params)
