@@ -150,8 +150,10 @@ def extract_translated_answer(answer_token_idxs: List[int],
             beam_values = beam[0]
             beam_idxs = all_beam_idxs[beam[1]]
 
+        breakpoint()
+
         # We now have the top `beam_width` best combinations of target tokens
         # stored in the `beam_idxs` tensor. We now extract the best combination
         # out of these, and return it.
         best_combination = beam_idxs[beam_values.argmax()]
-        return best_combination.tolist(), beam_values.max()[0]
+        return best_combination.tolist(), beam_values.max()
