@@ -9,7 +9,7 @@ def extract_translated_answer(answer_token_idxs: List[int],
                               cross_attention_tensor: Tensor,
                               beam_width: int = 100,
                               beam_radius: int = 3,
-                              max_attention_sum: int = 10) -> List[int]:
+                              max_attention_sum: int = 5) -> List[int]:
     '''Extracts the location of the answer in the translated document.
 
     Args:
@@ -57,7 +57,6 @@ def extract_translated_answer(answer_token_idxs: List[int],
 
         # Remove the tokens in the answer which have a large sum of attention
         # values, as these tend to be irrelevant words like 'the' or 'a'.
-        print(att_values.sum(dim=0))
         mask = att_values.sum(dim=0).gt(max_attention_sum)
         att_values[:, mask] = 0.
 
