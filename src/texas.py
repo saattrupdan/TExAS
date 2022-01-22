@@ -116,13 +116,8 @@ class Texas:
 
         # Use the character mapping to convert the character indices
         # to token indices
-        try:
-            token_s = [idx for idx, (start, end) in enumerate(charmap)
-                       if start <= char_s and char_s < end][0]
-        except:
-            token_s = [idx for idx, (start, end) in enumerate(charmap)
-                       if start <= char_s and char_s < end]
-            breakpoint()
+        token_s = [idx for idx, (start, end) in enumerate(charmap)
+                   if start <= char_s and char_s <= end][0]
         token_e = max([idx for idx, (start, _) in enumerate(charmap)
                        if start < char_e])
 
