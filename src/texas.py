@@ -160,7 +160,7 @@ class Texas:
             min_char_idx += 1
 
         # Scale the attention value to be the mean token attention value
-        value /= max_token_idx - min_token_idx
+        value /= 1 + max_token_idx - min_token_idx
 
         if return_token_indices:
             return (min_char_idx,
