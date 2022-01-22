@@ -154,4 +154,4 @@ def extract_translated_answer(answer_token_idxs: List[int],
         # stored in the `beam_idxs` tensor. We now extract the best combination
         # out of these, and return it.
         best_combination = beam_idxs[beam_values.argmax()]
-        return best_combination.tolist(), beam_values.max()[0].item()
+        return best_combination.tolist(), beam_values.max()[0]
