@@ -152,7 +152,7 @@ class Texas:
             max_char_idx -= 1
 
         # Ensure that `min_char_idx` not larger than `max_char_idx`
-        min_char_idx = max(min_char_idx, max_char_idx)
+        min_char_idx = min(min_char_idx, max_char_idx)
 
         # Ensure that the answer does not start with a space or punctuation
         while (min_char_idx < max_char_idx and
