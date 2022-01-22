@@ -146,17 +146,18 @@ class Texas:
         max_char_idx = max(0, min(translated_charmap[max_token_idx][1],
                                   len(translated_context) - 1))
 
-        # Ensure that the answer does not start with a space or punctuation
-        try:
-            while translated_context[min_char_idx] in ' !?.,:;)("\'':
-                min_char_idx += 1
-        except:
-            breakpoint()
-
         # Ensure that the answer does not end with punctuation or a
         # space
         while translated_context[max_char_idx - 1] in ' !?.,:;)("\'':
             max_char_idx -= 1
+
+        # Ensure that `min_char_idx` not larger than `max_char_idx`
+        min_char_idx = max(min_char_idx, max_char_idx)
+
+        # Ensure that the answer does not start with a space or punctuation
+        while (min_char_idx < max_char_idx and
+               translated_context[min_char_idx] in ' !?.,:;)("\''):
+            min_char_idx += 1
 
         if return_token_indices:
             return min_char_idx, max_char_idx, min_token_idx, max_token_idx
