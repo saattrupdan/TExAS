@@ -579,7 +579,6 @@ class Texas:
 
                 # Zero the cross-attention values at tokens outside the
                 # (ts, te) interval
-                breakpoint()
                 cross_attentions[:, :ts, :] = 0.
                 cross_attentions[:, te:, :] = 0.
 
