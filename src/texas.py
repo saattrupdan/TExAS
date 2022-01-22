@@ -147,8 +147,11 @@ class Texas:
                                   len(translated_context) - 1))
 
         # Ensure that the answer does not start with a space or punctuation
-        while translated_context[min_char_idx] in ' !?.,:;)("\'':
-            min_char_idx += 1
+        try:
+            while translated_context[min_char_idx] in ' !?.,:;)("\'':
+                min_char_idx += 1
+        except:
+            breakpoint()
 
         # Ensure that the answer does not end with punctuation or a
         # space
