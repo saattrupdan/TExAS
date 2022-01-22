@@ -12,7 +12,7 @@ from transformers import M2M100Tokenizer, M2M100ForConditionalGeneration
 import spacy
 import re
 import torch
-from typing import Union, List, Tuple, Callable
+from typing import Union, List, Tuple, Callable, Optional
 from answer_extraction import extract_translated_answer
 
 
