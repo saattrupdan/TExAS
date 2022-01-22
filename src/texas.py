@@ -250,9 +250,10 @@ class Texas:
         '''
         # Set up the target JSONL file
         if dataset_subset_id is None:
-            dataset_name = dataset_id
+            dataset_name = dataset_id.replace('/', '-')
         else:
-            dataset_name = f'{dataset_id}-{dataset_subset_id}'
+            dataset_name = dataset_id.replace('/', '-')
+            dataset_name = f'{dataset_name}-{dataset_subset_id}'
         path = Path(f'{dataset_name}-{split}-{target_language}.jsonl')
 
         # If the file already exists, raise an exception
