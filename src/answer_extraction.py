@@ -2,14 +2,15 @@
 
 from torch import Tensor
 import torch
-from typing import List
+from typing import List, Tuple
 
 
 def extract_translated_answer(answer_token_idxs: List[int],
                               cross_attention_tensor: Tensor,
                               beam_width: int = 100,
                               beam_radius: int = 3,
-                              max_attention_sum: int = 10) -> List[int]:
+                              max_attention_sum: int = 10
+                              ) -> Tuple[List[int], float]:
     '''Extracts the location of the answer in the translated document.
 
     Args:
@@ -29,9 +30,10 @@ def extract_translated_answer(answer_token_idxs: List[int],
             the answer. Defaults to 10.
 
     Returns:
-        list of int:
-            The indices of the tokens in the translated document that
-            correspond to the answer.
+        pair of a list of int and a float:
+            The first entry consists of indices of the tokens in the translated
+            document that correspond to the answer, and the second entry is the
+            attention score of the best translation.
     '''
     with torch.no_grad():
 
@@ -152,4 +154,4 @@ def extract_translated_answer(answer_token_idxs: List[int],
         # stored in the `beam_idxs` tensor. We now extract the best combination
         # out of these, and return it.
         best_combination = beam_idxs[beam_values.argmax()]
-        return best_combination.tolist()
+        return best_combination.tolist(), beam_values.max()[0].item()

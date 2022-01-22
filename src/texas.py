@@ -122,7 +122,7 @@ class Texas:
                        if start < char_e])
 
         # Extract the translated token IDs
-        idxs = extract_translated_answer(
+        idxs, value = extract_translated_answer(
             answer_token_idxs=range(token_s, token_e + 1),
             cross_attention_tensor=cross_attentions
         )
@@ -160,9 +160,13 @@ class Texas:
             min_char_idx += 1
 
         if return_token_indices:
-            return min_char_idx, max_char_idx, min_token_idx, max_token_idx
+            return (min_char_idx,
+                    max_char_idx,
+                    min_token_idx,
+                    max_token_idx,
+                    value)
         else:
-            return min_char_idx, max_char_idx
+            return min_char_idx, max_char_idx, value
 
     def _compute_cross_attentions(self,
                                   tokens: torch.Tensor,
@@ -421,7 +425,8 @@ class Texas:
             computed_s_and_e = False
             answers = dict(text=list(),
                            answer_start=list(),
-                           extraction_method=list())
+                           extraction_method=list(),
+                           attention_value=list())
             for answer, char_s in zip(answer_fn(example),
                                       answer_idx_fn(example)):
 
@@ -436,6 +441,7 @@ class Texas:
                         answers['answer_start'].append(answer_start)
                         answers['text'].append(answer)
                         answers['extraction_method'].append('unique')
+                        answers['attention_value'].append(-1)
                         continue
 
 
@@ -458,6 +464,7 @@ class Texas:
                         answers['answer_start'].append(answer_start)
                         answers['text'].append(answer)
                         answers['extraction_method'].append(method)
+                        answers['attention_value'].append(-1)
                         continue
 
 
@@ -476,7 +483,7 @@ class Texas:
                     # Use the cross attentions to find the rough location of
                     # the answer
                     if not computed_s_and_e:
-                        s, e, ts, te = self._extract_answer(
+                        s, e, ts, te, att_value = self._extract_answer(
                             char_start_idx=max(0, char_s - 20),
                             char_end_idx=min(len(ctx),
                                              char_s + len(answer) + 20),
@@ -502,6 +509,7 @@ class Texas:
                             answers['answer_start'].append(answer_start)
                             answers['text'].append(answer)
                             answers['extraction_method'].append('att+unique')
+                            answers['attention_value'].append(att_value)
                             continue
 
 
@@ -520,7 +528,7 @@ class Texas:
                     # Use the cross attentions to find the rough location of
                     # the answer
                     if not computed_s_and_e:
-                        s, e, ts, te = self._extract_answer(
+                        s, e, ts, te, att_value = self._extract_answer(
                             char_start_idx=max(0, char_s - 20),
                             char_end_idx=min(len(ctx),
                                              char_s + len(answer) + 20),
@@ -548,6 +556,7 @@ class Texas:
                             answers['answer_start'].append(answer_start)
                             answers['text'].append(ans)
                             answers['extraction_method'].append(method)
+                            answers['attention_value'].append(att_value)
                             continue
 
 
@@ -562,29 +571,9 @@ class Texas:
                     )
                     computed_cross_attentions = True
 
-                # Use the cross attentions to find the rough location of
-                # the answer
-                if not computed_s_and_e:
-                    s, e, ts, te = self._extract_answer(
-                        char_start_idx=max(0, char_s - 20),
-                        char_end_idx=min(len(ctx), char_s + len(answer) + 20),
-                        charmap=charmap,
-                        translated_charmap=translated_charmap,
-                        translated_tokens=translated_tokens,
-                        translated_context=translated_context,
-                        cross_attentions=cross_attentions,
-                        return_token_indices=True
-                    )
-                    computed_s_and_e = True
-
-                # Zero the cross-attention values at tokens outside the
-                # (ts, te) interval
-                # cross_attentions[:, :ts, :] = 0.
-                # cross_attentions[:, te:, :] = 0.
-
                 # Use the cross attentions to find the location of the
                 # translated answer
-                precise_s, precise_e = self._extract_answer(
+                precise_s, precise_e, att_value = self._extract_answer(
                     char_start_idx=max(0, char_s),
                     char_end_idx=min(len(ctx), char_s + len(answer)),
                     charmap=charmap,
@@ -599,6 +588,7 @@ class Texas:
                 answers['text'].append(answer)
                 answers['answer_start'].append(precise_s)
                 answers['extraction_method'].append('cross-attention')
+                answers['attention_value'].append(att_value)
 
             # Store the translated example
             new_example = dict(
