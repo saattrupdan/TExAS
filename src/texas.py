@@ -597,7 +597,7 @@ class Texas:
                 # Store the translated answer
                 answer = translated_context[precise_s:precise_e]
                 answers['text'].append(answer)
-                answers['answer_start'].append(s)
+                answers['answer_start'].append(precise_s)
                 answers['extraction_method'].append('cross-attention')
 
             # Store the translated example
