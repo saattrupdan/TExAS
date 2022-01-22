@@ -634,9 +634,13 @@ if __name__ == '__main__':
     #     texas.translate_dataset(split=split, **params)
 
     # GermanQuAD
+    def answer_idx_fn(example: dict):
+        answer_start = example['answers']['answer_start']
+        context_prefix_len = len('==='.join(x['context'].split('===')[:-1]))
+        context = example['context'].split('===')[-1]
+        num_context_newlines = len(context) - len(context.strip('\n'))
+        return answer_start - context_prefix_len - num_context_newlines
     context_fn = lambda x: x['context'].split('===')[-1].strip('\n')
-    answer_idx_fn = (lambda x: x['answers']['answer_start'] +
-                               len('==='.join(x['context'].split('===')[:-1])))
     params = dict(dataset_id='deepset/germanquad',
                   target_language='da',
                   sentence_splitter='de_core_news_sm',
