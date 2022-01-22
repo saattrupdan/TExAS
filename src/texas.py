@@ -151,13 +151,13 @@ class Texas:
         max_char_idx = max(0, min(translated_charmap[max_token_idx][1],
                                   len(translated_context) - 1))
 
-        # Ensure that the answer does not start with a space
-        while translated_context[min_char_idx] in ' !?.,:;)("':
+        # Ensure that the answer does not start with a space or punctuation
+        while translated_context[min_char_idx] in ' !?.,:;)("\'':
             min_char_idx += 1
 
         # Ensure that the answer does not end with punctuation or a
         # space
-        while translated_context[max_char_idx - 1] in ' !?.,:;)("':
+        while translated_context[max_char_idx - 1] in ' !?.,:;)("\'':
             max_char_idx -= 1
 
         if return_token_indices:
