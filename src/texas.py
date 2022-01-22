@@ -591,8 +591,7 @@ class Texas:
                     translated_charmap=translated_charmap,
                     translated_tokens=translated_tokens,
                     translated_context=translated_context,
-                    cross_attentions=cross_attentions,
-                    return_token_indices=True
+                    cross_attentions=cross_attentions
                 )
 
                 # Store the translated answer
