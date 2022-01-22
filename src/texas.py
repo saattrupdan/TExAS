@@ -549,8 +549,8 @@ class Texas:
                 # Use the cross attentions to find the rough location of
                 # the translated answer
                 s, e = self._extract_answer(
-                    char_start_idx=char_s,
-                    char_end_idx=char_s + len(answer),
+                    char_start_idx=max(0, char_s),
+                    char_end_idx=min(len(ctx), char_s + len(answer)),
                     charmap=charmap,
                     translated_charmap=translated_charmap,
                     translated_tokens=translated_tokens,
