@@ -636,7 +636,8 @@ if __name__ == '__main__':
     # GermanQuAD
     def answer_idx_fn(example: dict):
         answer_start = example['answers']['answer_start']
-        context_prefix_len = len('==='.join(x['context'].split('===')[:-1]))
+        context_prefixes = example['context'].split('===')[:-1]
+        context_prefix_len = len('==='.join(context_prefixes))
         context = example['context'].split('===')[-1]
         num_context_newlines = len(context) - len(context.strip('\n'))
         return answer_start - context_prefix_len - num_context_newlines
