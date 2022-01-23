@@ -283,7 +283,7 @@ class Texas:
 
         # TEMP
         from datasets import Dataset
-        dataset = Dataset.from_dict(dataset[6580:])
+        dataset = Dataset.from_dict(dataset[6850:])
 
         # Shortened variables for the translation model
         tokenizer = self.translation_tokenizer
