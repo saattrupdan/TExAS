@@ -120,7 +120,16 @@ class Texas:
             token_s = [idx for idx, (start, end) in enumerate(charmap)
                        if start <= char_s and char_s <= end][0]
         except IndexError:
-            breakpoint()
+            closest_left = max([idx for idx, (_, end) in enumerate(charmap)
+                                if end <= char_s])
+            closest_right = min([idx for idx, (start, _) in enumerate(charmap)
+                                 if char_s <= start])
+            left_distance = char_s - charmap[closest_left][1]
+            right_distance = charmap[closest_right][0] - char_s
+            if left_distance <= right_distance:
+                token_s = closest_left
+            else:
+                token_s = closest_right
 
         token_e = max([idx for idx, (start, _) in enumerate(charmap)
                        if start < char_e])
