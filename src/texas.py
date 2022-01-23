@@ -382,7 +382,10 @@ class Texas:
                         end = start + len(token_string)
                         translated_local_charmap.append((start, end))
                     if sent_idx == len(sentences) - 1:
-                        last_idx = translated_local_charmap[-1][-1]
+                        if len(translated_local_charmap) > 0:
+                            last_idx = translated_local_charmap[-1][-1]
+                        else:
+                            last_idx = translated_charstart
                         translated_local_charmap.append((last_idx, last_idx))
 
                     # Append the translation to the context
@@ -596,19 +599,21 @@ class Texas:
                 answers['answer_start'].append(precise_s)
                 answers['extraction_method'].append('cross-attention')
 
-            # Store the translated example
-            new_example = dict(
-                id=id_fn(example),
-                title=title_fn(example),
-                context=translated_context,
-                question=translated_question,
-                answers=answers,
-                original_dataset=dataset_id
-            )
+            # Store the translated example, unless there is an answer and all
+            # answers are empty strings
+            if len(answers) == 0 or any([len(a) > 0 for a in answers['text']]):
+                new_example = dict(
+                    id=id_fn(example),
+                    title=title_fn(example),
+                    context=translated_context,
+                    question=translated_question,
+                    answers=answers,
+                    original_dataset=dataset_id
+                )
 
-            # Append the translated example to the JSONL file
-            with path.open('a') as f:
-                f.write(json.dumps(new_example) + '\n')
+                # Append the translated example to the JSONL file
+                with path.open('a') as f:
+                    f.write(json.dumps(new_example) + '\n')
 
 
 if __name__ == '__main__':
