@@ -116,8 +116,12 @@ class Texas:
 
         # Use the character mapping to convert the character indices
         # to token indices
-        token_s = [idx for idx, (start, end) in enumerate(charmap)
-                   if start <= char_s and char_s <= end][0]
+        try:
+            token_s = [idx for idx, (start, end) in enumerate(charmap)
+                       if start <= char_s and char_s <= end][0]
+        except IndexError:
+            breakpoint()
+
         token_e = max([idx for idx, (start, _) in enumerate(charmap)
                        if start < char_e])
 
@@ -276,6 +280,10 @@ class Texas:
 
         # Initialise the dataset streaming
         dataset = load_dataset(dataset_id, dataset_subset_id, split=split)
+
+        # TEMP
+        from datasets import Dataset
+        dataset = Dataset.from_dict(dataset[6580:])
 
         # Shortened variables for the translation model
         tokenizer = self.translation_tokenizer
