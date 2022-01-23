@@ -357,7 +357,10 @@ class Texas:
                         end = start + len(token_string)
                         local_charmap.append((start, end))
                     if sent_idx == len(sentences) - 1:
-                        last_idx = local_charmap[-1][-1]
+                        if len(local_charmap) > 0:
+                            last_idx = local_charmap[-1][-1]
+                        else:
+                            last_idx = charstart
                         local_charmap.append((last_idx, last_idx))
 
                     # Get a mapping between the translated token IDs and the
