@@ -601,7 +601,8 @@ class Texas:
 
             # Store the translated example, unless there is an answer and all
             # answers are empty strings
-            if len(answers) == 0 or any([len(a) > 0 for a in answers['text']]):
+            if (len(answers['text']) == 0 or
+                    any([len(a) > 0 for a in answers['text']])):
                 new_example = dict(
                     id=id_fn(example),
                     title=title_fn(example),
