@@ -621,7 +621,7 @@ if __name__ == '__main__':
     texas = Texas()
 
     # SQuAD 2.0
-    params = dict(dataset_id='squad_v2', target_language='fr')
+    params = dict(dataset_id='squad_v2', target_language='ru')
     for split in ['train', 'validation']:
         texas.translate_dataset(split=split, **params)
 
