@@ -621,40 +621,32 @@ if __name__ == '__main__':
     texas = Texas()
 
     # SQuAD 2.0
-    params = dict(dataset_id='squad_v2',
-                  target_language='da')
+    params = dict(dataset_id='squad_v2', target_language='de')
     for split in ['train', 'validation']:
         texas.translate_dataset(split=split, **params)
 
-    # Adversarial QA
-    params = dict(dataset_id='adversarial_qa',
-                  dataset_subset_id='adversarialQA',
-                  target_language='da')
-    for split in ['train', 'validation', 'test']:
-        texas.translate_dataset(split=split, **params)
-
     # SberQuAD
-    params = dict(dataset_id='sberquad',
-                  target_language='da',
-                  sentence_splitter='ru_core_news_sm')
-    for split in ['train', 'validation', 'test']:
-        texas.translate_dataset(split=split, **params)
+    # params = dict(dataset_id='sberquad',
+    #               target_language='da',
+    #               sentence_splitter='ru_core_news_sm')
+    # for split in ['train', 'validation', 'test']:
+    #     texas.translate_dataset(split=split, **params)
 
     # GermanQuAD
-    def answer_idx_fn(example: dict):
-        answer_start = example['answers']['answer_start']
-        context_prefixes = example['context'].split('===')[:-1]
-        context_prefix_len = len('==='.join(context_prefixes))
-        context = example['context'].split('===')[-1]
-        num_context_newlines = len(context) - len(context.strip('\n'))
-        return [start_idx - context_prefix_len - num_context_newlines
-                for start_idx in answer_start]
-    context_fn = lambda x: x['context'].split('===')[-1].strip('\n')
-    params = dict(dataset_id='deepset/germanquad',
-                  target_language='da',
-                  sentence_splitter='de_core_news_sm',
-                  title_fn=lambda x: x['context'].split('===')[0].strip('\n'),
-                  context_fn=context_fn,
-                  answer_idx_fn=answer_idx_fn)
-    for split in ['train', 'test']:
-        texas.translate_dataset(split=split, **params)
+    # def answer_idx_fn(example: dict):
+    #     answer_start = example['answers']['answer_start']
+    #     context_prefixes = example['context'].split('===')[:-1]
+    #     context_prefix_len = len('==='.join(context_prefixes))
+    #     context = example['context'].split('===')[-1]
+    #     num_context_newlines = len(context) - len(context.strip('\n'))
+    #     return [start_idx - context_prefix_len - num_context_newlines
+    #             for start_idx in answer_start]
+    # context_fn = lambda x: x['context'].split('===')[-1].strip('\n')
+    # params = dict(dataset_id='deepset/germanquad',
+    #               target_language='da',
+    #               sentence_splitter='de_core_news_sm',
+    #               title_fn=lambda x: x['context'].split('===')[0].strip('\n'),
+    #               context_fn=context_fn,
+    #               answer_idx_fn=answer_idx_fn)
+    # for split in ['train', 'test']:
+    #     texas.translate_dataset(split=split, **params)
