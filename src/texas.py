@@ -129,7 +129,7 @@ class Texas:
             closest_rights = [idx for idx, (_, end) in enumerate(charmap)
                               if char_s <= end]
             if len(closest_rights) == 0:
-                closest_right = max([end for (_, end) in charmap])
+                closest_right = len(charmap) - 1
             else:
                 closest_right = min(closest_rights)
             left_distance = char_s - charmap[closest_left][1]
