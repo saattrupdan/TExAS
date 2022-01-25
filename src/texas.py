@@ -298,6 +298,10 @@ class Texas:
         # Initialise the dataset streaming
         dataset = load_dataset(dataset_id, dataset_subset_id, split=split)
 
+        # TEMP
+        from datasets import Dataset
+        dataset = Dataset.from_dict(dataset[72200:])
+
         # Shortened variables for the translation model
         tokenizer = self.translation_tokenizer
 
@@ -629,7 +633,7 @@ if __name__ == '__main__':
     texas = Texas()
 
     # SQuAD 2.0
-    params = dict(dataset_id='squad_v2', target_language='is')
+    params = dict(dataset_id='squad_v2', target_language='da')
     for split in ['train', 'validation']:
         texas.translate_dataset(split=split, **params)
 
