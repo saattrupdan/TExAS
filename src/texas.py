@@ -298,10 +298,6 @@ class Texas:
         # Initialise the dataset streaming
         dataset = load_dataset(dataset_id, dataset_subset_id, split=split)
 
-        # TEMP
-        from datasets import Dataset
-        dataset = Dataset.from_dict(dataset[72200:])
-
         # Shortened variables for the translation model
         tokenizer = self.translation_tokenizer
 
