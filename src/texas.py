@@ -630,7 +630,7 @@ if __name__ == '__main__':
 
     # SQuAD 2.0
     params = dict(dataset_id='squad_v2', target_language='da')
-    for split in ['validation', 'train']:
+    for split in ['train', 'validation']:
         texas.translate_dataset(split=split, **params)
 
     # SberQuAD
