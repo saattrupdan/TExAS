@@ -94,8 +94,8 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     ]
     references = [
         dict(id=example['id'],
-             answers=dict(text=example['answers'],
-                          answer_start=example['answer_start']))
+             answers=dict(text=example['answers']['text'],
+                          answer_start=example['answers']['answer_start']))
         for example in dataset_dict["validation"]]
     scores = metric.compute(predictions=predictions, references=references)
     em_score = scores['exact_match']
