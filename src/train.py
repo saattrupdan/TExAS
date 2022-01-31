@@ -88,6 +88,10 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     metric = load_metric('squad_v2')
 
     # Compute metric score
+    predictions = [
+        dict(id=k, prediction_text=v, no_answer_probability=0.)
+        for k, v in predictions.items()
+    ]
     references = [dict(id=example['id'], answers=example['answers'])
                   for example in dataset_dict["validation"]]
     scores = metric.compute(predictions=predictions, references=references)
