@@ -32,7 +32,9 @@ class Config(BaseModel):
         max_answer_length (int, optional):
             The maximum length of an answer. Defaults to 30.
         n_best_size (int, optional):
-            The number of n-best predictions to output. Defaults to 20.
+            The number of n-best combinations of pairs of logits to consider
+            before making predictions. Only relevant at test-time. Defaults to
+            20.
     '''
     model_id: str = 'xlm-roberta-base'
     batch_size: int = 8
