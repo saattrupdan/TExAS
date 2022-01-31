@@ -92,8 +92,11 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
         dict(id=k, prediction_text=v, no_answer_probability=0.)
         for k, v in predictions.items()
     ]
-    references = [dict(id=example['id'], answers=example['answers'])
-                  for example in dataset_dict["validation"]]
+    references = [
+        dict(id=example['id'],
+             answers=dict(text=example['answers'],
+                          answer_start=example['answer_start']))
+        for example in dataset_dict["validation"]]
     scores = metric.compute(predictions=predictions, references=references)
     em_score = scores['exact_match']
     f1_score = scores['f1']
@@ -115,6 +118,8 @@ if __name__ == "__main__":
         train=f'datasets/squad_v2-train-{LANGUAGE_CODE}.jsonl',
         validation=f'datasets/squad_v2-validation-{LANGUAGE_CODE}.jsonl'
     ))
+
+    breakpoint()
 
     # Load config
     config = Config()
