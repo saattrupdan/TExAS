@@ -114,13 +114,18 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
 
 
 if __name__ == "__main__":
+    import sys
+
     # Set language code
-    LANGUAGE_CODE = 'da'
+    if len(sys.argv) > 1:
+        language_code = sys.argv[1]
+    else:
+        raise ValueError('Please provide a language code')
 
     # Load dataset dict
     dataset_dict = DatasetDict.from_json(dict(
-        train=f'datasets/squad_v2-train-{LANGUAGE_CODE}.jsonl',
-        validation=f'datasets/squad_v2-validation-{LANGUAGE_CODE}.jsonl'
+        train=f'datasets/squad_v2-train-{language_code}.jsonl',
+        validation=f'datasets/squad_v2-validation-{language_code}.jsonl'
     ))
 
     # Load config
@@ -128,5 +133,5 @@ if __name__ == "__main__":
 
     # Train the model
     train(dataset_dict,
-          output_model_id=f'saattrupdan/xlmr-base-texas-squad-{LANGUAGE_CODE}',
+          output_model_id=f'saattrupdan/xlmr-base-texas-squad-{language_code}',
           config=config)
