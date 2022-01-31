@@ -25,7 +25,7 @@ class QAPreparer:
         self.config = config
 
         # Load tokenizer
-        self.tokenizer = AutoTokenizer.from_pretrained(config.model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(config.model_id)
 
         # Disable tokenizers parallelism
         os.environ['TOKENIZERS_PARALLELISM'] = 'false'
