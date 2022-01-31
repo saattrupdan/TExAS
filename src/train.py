@@ -155,8 +155,8 @@ if __name__ == "__main__":
 
     # Load config
     config = Config(model_id='xlm-roberta-large',
-                    batch_size=4,
-                    gradient_accumulation_steps=8)
+                    batch_size=1,
+                    gradient_accumulation_steps=32)
 
     # Train the model
     train(dataset_dict,
