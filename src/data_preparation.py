@@ -3,8 +3,6 @@
 This is based on the example at:
     https://colab.research.google.com/github/huggingface/notebooks/blob/master/examples/question_answering.ipynb
 '''
-
-
 from datasets.dataset_dict import DatasetDict
 from datasets.arrow_dataset import Dataset
 from transformers import AutoTokenizer
@@ -28,6 +26,46 @@ class QAPreparer:
 
         # Disable tokenizers parallelism
         os.environ['TOKENIZERS_PARALLELISM'] = 'false'
+
+    def prepare_train_val_datasets(self,
+                                   dataset_dict: DatasetDict) -> DatasetDict:
+        '''Prepare training dataset.
+
+        Args:
+            dataset_dict (DatasetDict):
+                The dictionary containing the training and validation splits.
+
+        Returns:
+            DatasetDict:
+                Prepared dataset.
+        '''
+        feature_names = dataset_dict['train'].column_names
+        prepared = dataset_dict.map(self._prepare_train_examples,
+                                    batched=True,
+                                    remove_columns=feature_names)
+        return prepared
+
+    def prepare_test_dataset(self, test_dataset: Dataset) -> Dataset:
+        '''Prepare test dataset.
+
+        Args:
+            test_dataset (Dataset):
+                The dataset used for testing.
+
+        Returns:
+            Dataset:
+                Prepared test dataset.
+        '''
+        feature_names = test_dataset.column_names
+        prepared = test_dataset.map(self._prepare_test_examples,
+                                    batched=True,
+                                    remove_columns=feature_names)
+        prepared.set_format(type=prepared.format["type"],
+                            columns=list(prepared.features.keys()))
+        return prepared
+
+    def postprocess_predictions(self, predictions):
+        pass
 
     def _prepare_train_examples(self, examples: dict) -> dict:
         '''Prepare training examples.
@@ -137,33 +175,16 @@ class QAPreparer:
 
         return tokenized_examples
 
-    def prepare_train_datasets(self, dataset_dict: DatasetDict) -> DatasetDict:
-        '''Prepare training dataset.
-
-        Args:
-            dataset_dict (DatasetDict):
-                The dictionary containing the training and validation splits.
-
-        Returns:
-            DatasetDict:
-                Prepared dataset.
-        '''
-        feature_names = dataset_dict['train'].column_names
-        prepared = dataset_dict.map(self._prepare_train_examples,
-                                    batched=True,
-                                    remove_columns=feature_names)
-        return prepared
-
-    def _prepare_val_examples(self, examples: dict) -> dict:
-        '''Prepare valuation examples, after training.
+    def _prepare_test_examples(self, examples: dict) -> dict:
+        '''Prepare test examples.
 
         Args:
             examples (dict):
-                Dictionary of validation examples.
+                Dictionary of test examples.
 
         Returns:
             dict:
-                Dictionary of validation examples.
+                Dictionary of prepared test examples.
         '''
         # Convenience abbrevations
         tokenizer = self.tokenizer
@@ -221,22 +242,3 @@ class QAPreparer:
             ]
 
         return tokenized_examples
-
-    def prepare_val_dataset(self, val_dataset: Dataset) -> Dataset:
-        '''Prepare valuation dataset, after training.
-
-        Args:
-            val_dataset (Dataset):
-                The validation split of the dataset.
-
-        Returns:
-            Dataset:
-                Prepared valuation dataset.
-        '''
-        feature_names = val_dataset.column_names
-        prepared = val_dataset.map(self._prepare_val_examples,
-                                    batched=True,
-                                    remove_columns=feature_names)
-        prepared.set_format(type=prepared.format["type"],
-                            columns=list(prepared.features.keys()))
-        return prepared

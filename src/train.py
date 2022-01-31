@@ -11,7 +11,6 @@ from transformers import (AutoModelForQuestionAnswering,
 
 from data_preparation import QAPreparer
 from config import Config
-import torch
 
 
 def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
@@ -30,7 +29,7 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     preparer = QAPreparer(config)
 
     # Prepare the dataset for training
-    dataset_dict = preparer.prepare_train_datasets(dataset_dict)
+    dataset_dict = preparer.prepare_train_val_datasets(dataset_dict)
 
     # Load the model
     model = AutoModelForQuestionAnswering.from_pretrained(config.model_id)
@@ -55,23 +54,23 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     trainer = Trainer(
         model,
         args,
-        train_dataset=tokenized_datasets['train'],
-        eval_dataset=tokenized_datasets['validation'],
+        train_dataset=dataset_dict['train'],
+        eval_dataset=dataset_dict['validation'],
         data_collator=default_data_collator,
-        tokenizer=tokenizer,
+        tokenizer=preparer.tokenizer,
     )
 
     # Finetune the model
     trainer.train()
 
     # Save the model
-    trainer.save_model(output_model_id.split('/')[-1])
+    trainer.save_model()
 
-    # Prepare the val split for QA evaluation
-    val_dataset = preparer.prepare_val_dataset(dataset_dict['validation'])
+    # Prepare the test dataset
+    test_dataset = preparer.prepare_test_dataset(dataset_dict['validation'])
 
-    # Get validation predictions
-    raw_predictions = trainer.predict(val_dataset)
+    # Get test predictions
+    raw_predictions = trainer.predict(test_dataset)
 
     # Postprocess the predictions
     predictions = preparer.postprocess_predictions(raw_predictions)
