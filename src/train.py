@@ -84,8 +84,8 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     scores = evaluate(test_dataset, trainer, preparer)
 
     # Print the results
-    print(f'EM: {scores["em"]}:.3f}')
-    print(f'F1: {scores["f1"]}:.3f}')
+    print(f'EM: {scores["em"]:.3f}')
+    print(f'F1: {scores["f1"]:.3f}')
 
 
 def evaluate(test_dataset: Dataset,
