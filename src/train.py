@@ -71,15 +71,18 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     # Save the model
     trainer.save_model()
 
+    # Initialise the test dataset
+    test_dataset = Dataset.from_dict(dataset_dict['validation'][:100])
+
     # Prepare the test dataset
-    prepared_test = preparer.prepare_test_dataset(dataset_dict['validation'])
+    prepared_test = preparer.prepare_test_dataset(test_dataset)
 
     # Get test predictions
     predictions = trainer.predict(prepared_test)
 
     # Postprocess the predictions
     predictions = preparer.postprocess_predictions(
-        test_dataset=dataset_dict['validation'],
+        test_dataset=test_dataset,
         prepared_test_dataset=prepared_test,
         predictions=predictions
     )
@@ -96,7 +99,7 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
         dict(id=example['id'],
              answers=dict(text=example['answers']['text'],
                           answer_start=example['answers']['answer_start']))
-        for example in dataset_dict["validation"][:100]
+        for example in test_dataset
     ]
     scores = metric.compute(predictions=predictions, references=references)
     em_score = scores['exact_match']
