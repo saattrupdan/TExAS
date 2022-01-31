@@ -59,8 +59,8 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     trainer = Trainer(
         model,
         args,
-        train_dataset=Dataset.from_dict(prepared['train'][:100]),
-        eval_dataset=Dataset.from_dict(prepared['validation'][:100]),
+        train_dataset=prepared['train'],
+        eval_dataset=prepared['validation'],
         data_collator=default_data_collator,
         tokenizer=preparer.tokenizer,
     )
