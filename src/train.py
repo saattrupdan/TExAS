@@ -71,8 +71,11 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     # Save the model
     trainer.save_model()
 
+    # Push to hub
+    trainer.push_to_hub()
+
     # Initialise the test dataset
-    test_dataset = Dataset.from_dict(dataset_dict['validation'][:100])
+    test_dataset = dataset_dict['validation']
 
     # Prepare the test dataset
     prepared_test = preparer.prepare_test_dataset(test_dataset)
@@ -102,16 +105,12 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
         for example in test_dataset
     ]
     scores = metric.compute(predictions=predictions, references=references)
-    breakpoint()
-    em_score = scores['exact_match']
+    em_score = scores.['exact']
     f1_score = scores['f1']
 
     # Print the results
     print(f'EM: {em_score:.3f}')
     print(f'F1: {f1_score:.3f}')
-
-    # Push to hub
-    trainer.push_to_hub()
 
 
 if __name__ == "__main__":
