@@ -29,7 +29,7 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     preparer = QAPreparer(config)
 
     # Prepare the dataset for training
-    dataset_dict = preparer.prepare_train_val_datasets(dataset_dict)
+    prepared = preparer.prepare_train_val_datasets(dataset_dict)
 
     # Load the model
     model = AutoModelForQuestionAnswering.from_pretrained(config.model_id)
@@ -54,8 +54,8 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     trainer = Trainer(
         model,
         args,
-        train_dataset=Dataset.from_dict(dataset_dict['train'][:1000]),
-        eval_dataset=Dataset.from_dict(dataset_dict['validation'][:1000]),
+        train_dataset=Dataset.from_dict(prepared['train'][:100]),
+        eval_dataset=Dataset.from_dict(prepared['validation'][:100]),
         data_collator=default_data_collator,
         tokenizer=preparer.tokenizer,
     )
@@ -67,13 +67,17 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     trainer.save_model()
 
     # Prepare the test dataset
-    test_dataset = preparer.prepare_test_dataset(dataset_dict['validation'])
+    prepared_test = preparer.prepare_test_dataset(dataset_dict['validation'])
 
     # Get test predictions
-    raw_predictions = trainer.predict(test_dataset)
+    predictions = trainer.predict(prepared_test)
 
     # Postprocess the predictions
-    predictions = preparer.postprocess_predictions(raw_predictions)
+    predictions = preparer.postprocess_predictions(
+        test_dataset=dataset_dict['validation'],
+        prepared_test_dataset=prepared_test,
+        predictions=predictions
+    )
 
     # Load metric
     metric = load_metric('squad_v2')
