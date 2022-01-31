@@ -119,8 +119,6 @@ if __name__ == "__main__":
         validation=f'datasets/squad_v2-validation-{LANGUAGE_CODE}.jsonl'
     ))
 
-    breakpoint()
-
     # Load config
     config = Config()
 
