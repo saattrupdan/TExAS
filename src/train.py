@@ -11,6 +11,7 @@ from transformers import (AutoModelForQuestionAnswering,
 
 from data_preparation import QAPreparer
 from config import Config
+import wandb
 
 
 def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
@@ -25,6 +26,10 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
         config (Config):
             The configuration for the finetuning.
     '''
+    # Set up wandb
+    wandb.init(project='texas', entity='saattrupdan')
+    wandb.config = dict(config)
+
     # Initialise the QA preparer
     preparer = QAPreparer(config)
 
