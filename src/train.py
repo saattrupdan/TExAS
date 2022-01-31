@@ -3,7 +3,7 @@
 This is based on the example at:
     https://colab.research.google.com/github/huggingface/notebooks/blob/master/examples/question_answering.ipynb
 '''
-from datasets import DatasetDict, load_metric
+from datasets import DatasetDict, load_metric, Dataset
 from transformers import (AutoModelForQuestionAnswering,
                           TrainingArguments,
                           default_data_collator,
@@ -54,8 +54,8 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     trainer = Trainer(
         model,
         args,
-        train_dataset=dataset_dict['train'],
-        eval_dataset=dataset_dict['validation'],
+        train_dataset=Dataset.from_dict(dataset_dict['train'][:1000]),
+        eval_dataset=Dataset.from_dict(dataset_dict['validation'][:1000]),
         data_collator=default_data_collator,
         tokenizer=preparer.tokenizer,
     )
