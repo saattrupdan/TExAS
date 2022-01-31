@@ -105,7 +105,7 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
         for example in test_dataset
     ]
     scores = metric.compute(predictions=predictions, references=references)
-    em_score = scores.['exact']
+    em_score = scores['exact']
     f1_score = scores['f1']
 
     # Print the results
