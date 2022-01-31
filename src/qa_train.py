@@ -9,6 +9,7 @@ from transformers import (AutoTokenizer,
 from pydantic import BaseModel
 from typing import Tuple
 from functools import partial
+import os
 
 
 class Config(BaseModel):
@@ -37,12 +38,15 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
         config (Config):
             The configuration for the finetuning.
     '''
+    # Disable tokenizers parallelism
+    os.environ['TOKENIZERS_PARALLELISM'] = 'false'
+
     # Load the tokenizer and model
     tokenizer = AutoTokenizer.from_pretrained(config.model_id)
     model = AutoModelForQuestionAnswering.from_pretrained(config.model_id)
 
     # Prepare the dataset
-    feature_names = dataset_dict["train"].column_names
+    feature_names = dataset_dict['train'].column_names
     prepare_fn = partial(prepare_train_features,
                          tokenizer=tokenizer,
                          config=config)
@@ -53,7 +57,7 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     # Prepare the training arguments
     args = TrainingArguments(
         output_dir=output_model_id.split('/')[-1],
-        evaluation_strategy = "epoch",
+        evaluation_strategy = 'epoch',
         learning_rate=config.learning_rate,
         per_device_train_batch_size=config.batch_size,
         per_device_eval_batch_size=config.batch_size,
@@ -70,8 +74,8 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     trainer = Trainer(
         model,
         args,
-        train_dataset=tokenized_datasets["train"],
-        eval_dataset=tokenized_datasets["validation"],
+        train_dataset=tokenized_datasets['train'],
+        eval_dataset=tokenized_datasets['validation'],
         data_collator=default_data_collator,
         tokenizer=tokenizer,
     )
@@ -113,8 +117,8 @@ def prepare_train_features(examples: dict, tokenizer, config: Config) -> dict:
         examples["question" if config.pad_on_right else "context"],
         examples["context" if config.pad_on_right else "question"],
         truncation="only_second" if config.pad_on_right else "only_first",
-        max_length=max_length,
-        stride=doc_stride,
+        max_length=config.max_length,
+        stride=config.doc_stride,
         return_overflowing_tokens=True,
         return_offsets_mapping=True,
         padding="max_length",
@@ -192,3 +196,20 @@ def prepare_train_features(examples: dict, tokenizer, config: Config) -> dict:
                 tokenized_examples["end_positions"].append(token_end_index)
 
     return tokenized_examples
+
+
+if __name__ == "__main__":
+
+    # Load dataset dict
+    dataset_dict = DatasetDict.from_json(dict(
+        train='datasets/squad_v2-train-da.jsonl',
+        validation='datasets/squad_v2-validation-da.jsonl'
+    ))
+
+    # Load config
+    config = Config()
+
+    # Train the model
+    train(dataset_dict,
+          output_model_id='saattrupdan/xlmr-base-texas-squad-da',
+          config=config)
