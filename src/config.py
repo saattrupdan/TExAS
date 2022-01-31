@@ -31,6 +31,8 @@ class Config(BaseModel):
             Whether to pad on the right. Defaults to True.
         max_answer_length (int, optional):
             The maximum length of an answer. Defaults to 30.
+        n_best_size (int, optional):
+            The number of n-best predictions to output. Defaults to 20.
     '''
     model_id: str = 'xlm-roberta-base'
     batch_size: int = 8
@@ -43,3 +45,4 @@ class Config(BaseModel):
     doc_stride: int = 128
     pad_on_right: bool = True
     max_answer_length: int = 30
+    n_best_size: int = 20
