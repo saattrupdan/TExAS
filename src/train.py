@@ -42,7 +42,9 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     # Prepare the training arguments
     args = TrainingArguments(
         output_dir=output_model_id.split('/')[-1],
-        evaluation_strategy = 'epoch',
+        evaluation_strategy = 'steps',
+        eval_steps=500,
+        logging_steps=100,
         learning_rate=config.learning_rate,
         per_device_train_batch_size=config.batch_size,
         per_device_eval_batch_size=config.batch_size,
