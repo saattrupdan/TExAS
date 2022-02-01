@@ -74,6 +74,9 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     # Save the model
     trainer.save_model()
 
+    # Stop Wandb logging
+    wandb.finish()
+
     # Push to hub
     if config.push_to_hub:
         trainer.push_to_hub()
