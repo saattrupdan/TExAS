@@ -8,7 +8,9 @@ from transformers import (AutoModelForQuestionAnswering,
                           TrainingArguments,
                           default_data_collator,
                           Trainer)
+from pathlib import Path
 from typing import Dict
+import json
 
 from data_preparation import QAPreparer
 from config import Config
@@ -44,7 +46,7 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     args = TrainingArguments(
         output_dir=output_model_id.split('/')[-1],
         evaluation_strategy = 'steps',
-        eval_steps=500,
+        eval_steps=1000,
         logging_steps=100,
         learning_rate=config.learning_rate,
         per_device_train_batch_size=config.batch_size,
@@ -86,6 +88,12 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
 
     # Evaluate the model
     scores = evaluate(test_dataset, trainer, preparer)
+
+    # Store the scores
+    score_path = Path(f'{output_model_id}-scores.jsonl')
+    with score_path.open('w') as f:
+        jsonned = json.dumps(scores)
+        f.write(jsonned)
 
     # Print the results
     print(f'EM: {scores["em"]:.3f}')
