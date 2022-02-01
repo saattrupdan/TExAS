@@ -133,3 +133,6 @@ notebooks/
 
 # Data files
 **/*.jsonl
+
+# Wandb files
+wandb
