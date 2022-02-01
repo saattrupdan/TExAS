@@ -65,7 +65,7 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
         train_dataset=prepared['train'],
         eval_dataset=prepared['validation'],
         data_collator=default_data_collator,
-        tokenizer=preparer.tokenizer,
+        tokenizer=preparer.tokenizer
     )
 
     # Finetune the model
@@ -155,7 +155,7 @@ if __name__ == "__main__":
     ))
 
     # Load config
-    config = Config(model_id='vesteinn/IceBERT', push_to_hub=False)
+    config = Config()
 
     # Train the model
     train(dataset_dict,
