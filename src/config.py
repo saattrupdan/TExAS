@@ -35,6 +35,8 @@ class Config(BaseModel):
             The number of n-best combinations of pairs of logits to consider
             before making predictions. Only relevant at test-time. Defaults to
             20.
+        push_to_hub (bool, optional):
+            Whether to push the model to the Hub. Defaults to True.
     '''
     model_id: str = 'xlm-roberta-base'
     batch_size: int = 8
@@ -48,3 +50,4 @@ class Config(BaseModel):
     pad_on_right: bool = True
     max_answer_length: int = 30
     n_best_size: int = 20
+    push_to_hub: bool = True

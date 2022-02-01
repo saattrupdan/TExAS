@@ -75,7 +75,8 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     trainer.save_model()
 
     # Push to hub
-    trainer.push_to_hub()
+    if config.push_to_hub:
+        trainer.push_to_hub()
 
     # Initialise the test dataset
     test_dataset = dataset_dict['validation']
@@ -154,11 +155,9 @@ if __name__ == "__main__":
     ))
 
     # Load config
-    config = Config(model_id='xlm-roberta-large',
-                    batch_size=1,
-                    gradient_accumulation_steps=32)
+    config = Config(model_id='vesteinn/IceBERT', push_to_hub=False)
 
     # Train the model
     train(dataset_dict,
-          output_model_id=f'saattrupdan/xlmr-large-texas-squad-{language_code}',
+          output_model_id=f'saattrupdan/icebert-texas-squad-{language_code}',
           config=config)
