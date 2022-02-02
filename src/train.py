@@ -79,15 +79,15 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     # Evaluate the model
     scores = evaluate(test_dataset, trainer, preparer)
 
-    # Store the scores
-    score_path = Path(f'{output_model_id}-scores.jsonl')
-    with score_path.open('w') as f:
-        jsonned = json.dumps(scores)
-        f.write(jsonned)
-
     # Print the results
     print(f'EM: {scores["em"]:.3f}')
     print(f'F1: {scores["f1"]:.3f}')
+
+    # Store the scores
+    score_path = Path(f'{output_model_id.split("/")[-1]}-scores.jsonl')
+    with score_path.open('w') as f:
+        jsonned = json.dumps(scores)
+        f.write(jsonned)
 
     # Save the model
     trainer.save_model()
