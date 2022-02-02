@@ -114,6 +114,9 @@ class Texas:
         # Abbreviate `char_start_idx` and `char_end_idx`
         char_s, char_e = char_start_idx, char_end_idx
 
+        # Ensure that `char_e` >= `char_s`
+        char_e = max(char_s, char_e)
+
         # Use the character mapping to convert the character indices
         # to token indices
         try:
@@ -643,6 +646,11 @@ if __name__ == '__main__':
     #               dataset_subset_id='adversarialQA',
     #               target_language='da')
     # for split in ['train', 'validation', 'test']:
+    #     texas.translate_dataset(split=split, **params)
+
+    # CUAD
+    # params = dict(dataset_id='cuad', target_language='da')
+    # for split in ['train', 'test']:
     #     texas.translate_dataset(split=split, **params)
 
     # SberQuAD
