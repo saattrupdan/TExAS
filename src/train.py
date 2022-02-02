@@ -73,16 +73,6 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     # Finetune the model
     trainer.train()
 
-    # Save the model
-    trainer.save_model()
-
-    # Stop Wandb logging
-    wandb.finish()
-
-    # Push to hub
-    if config.push_to_hub:
-        trainer.push_to_hub()
-
     # Initialise the test dataset
     test_dataset = dataset_dict['validation']
 
@@ -98,6 +88,17 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     # Print the results
     print(f'EM: {scores["em"]:.3f}')
     print(f'F1: {scores["f1"]:.3f}')
+
+    # Save the model
+    trainer.save_model()
+
+    # Stop Wandb logging
+    wandb.finish()
+
+    # Push to hub
+    if config.push_to_hub:
+        trainer.push_to_hub()
+
 
 
 def evaluate(test_dataset: Dataset,
