@@ -7,7 +7,7 @@ This is an implementation of the model described in the paper:
 import json
 from pathlib import Path
 from tqdm.auto import tqdm
-from datasets import load_dataset
+from datasets import load_dataset, Dataset
 from transformers import M2M100Tokenizer, M2M100ForConditionalGeneration
 import spacy
 import re
@@ -227,6 +227,7 @@ class Texas:
             dataset_id: str = 'squad_v2',
             dataset_subset_id: Optional[str] = None,
             split: str = 'train',
+            dataset: Dataset = None,
             target_language: str = 'da',
             sentence_splitter: str = 'en_core_web_sm',
             context_fn: Callable = lambda x: x['context'],
@@ -250,6 +251,9 @@ class Texas:
                 one subset. Defaults to None.
             split (str, optional):
                 The split of the dataset to translate. Defaults to 'train'.
+            dataset (Dataset or None, optional):
+                The dataset to translate. If None, it is loaded from the
+                `dataset_id` and `dataset_subset_id`. Defaults to None.
             target_language (str, optional):
                 The target language of the translation. Defaults to 'da'.
             sentence_splitter (str, optional):
@@ -296,7 +300,8 @@ class Texas:
         path.touch()
 
         # Initialise the dataset streaming
-        dataset = load_dataset(dataset_id, dataset_subset_id, split=split)
+        if dataset is None:
+            dataset = load_dataset(dataset_id, dataset_subset_id, split=split)
 
         # Shortened variables for the translation model
         tokenizer = self.translation_tokenizer
@@ -648,9 +653,13 @@ if __name__ == '__main__':
     #     texas.translate_dataset(split=split, **params)
 
     # FQuAD
-    params = dict(target_language='da', sentence_splitter='fr_core_news_sm')
-    texas.translate_dataset(dataset_id='datasets/fquad_train', **params)
-    texas.translate_dataset(dataset_id='datasets/fquad_val', **params)
+    train = Dataset.from_json('datasets/fquad_train.jsonl')
+    val = Dataset.from_json('datasets/fquad_val.jsonl')
+    params = dict(dataset_id='fquad',
+                  target_language='da',
+                  sentence_splitter='fr_core_news_sm')
+    texas.translate_dataset(split='train', dataset=train, **params)
+    texas.translate_dataset(split='validation', dataset=val, **params)
 
     # GermanQuAD
     # def answer_idx_fn(example: dict):
