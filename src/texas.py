@@ -641,11 +641,16 @@ if __name__ == '__main__':
     #     texas.translate_dataset(split=split, **params)
 
     # SberQuAD
-    params = dict(dataset_id='sberquad',
-                  target_language='da',
-                  sentence_splitter='ru_core_news_sm')
-    for split in ['train', 'validation', 'test']:
-        texas.translate_dataset(split=split, **params)
+    # params = dict(dataset_id='sberquad',
+    #               target_language='da',
+    #               sentence_splitter='ru_core_news_sm')
+    # for split in ['train', 'validation', 'test']:
+    #     texas.translate_dataset(split=split, **params)
+
+    # FQuAD
+    params = dict(target_language='da', sentence_splitter='fr_core_news_sm')
+    texas.translate_dataset(dataset_id='datasets/fquad_train', **params)
+    texas.translate_dataset(dataset_id='datasets/fquad_val', **params)
 
     # GermanQuAD
     # def answer_idx_fn(example: dict):
