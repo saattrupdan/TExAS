@@ -167,9 +167,9 @@ if __name__ == "__main__":
     ))
 
     # Load config
-    config = Config(model_id='vesteinn/IceBERT')
+    config = Config()
 
     # Train the model
     train(dataset_dict,
-          output_model_id=f'saattrupdan/icebert-texas-squad-{language_code}',
+          output_model_id=f'saattrupdan/xlmr-base-texas-squad-{language_code}',
           config=config)
