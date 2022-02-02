@@ -133,6 +133,10 @@ notebooks/
 
 # Data files
 **/*.jsonl
+datasets
 
 # Wandb files
 wandb
+
+# MacOS
+.DS_Store
