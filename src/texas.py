@@ -142,8 +142,11 @@ class Texas:
             else:
                 token_s = closest_right
 
-        token_e = max([idx for idx, (start, _) in enumerate(charmap)
-                       if start < char_e])
+        try:
+            token_e = max([idx for idx, (start, _) in enumerate(charmap)
+                           if start < char_e])
+        except:
+            breakpoint()
 
         # Extract the translated token IDs
         idxs = extract_translated_answer(
