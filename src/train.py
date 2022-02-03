@@ -4,6 +4,7 @@ This is based on the example at:
     https://colab.research.google.com/github/huggingface/notebooks/blob/master/examples/question_answering.ipynb
 '''
 from datasets import DatasetDict, load_metric, Dataset, concatenate_datasets
+from datasets.features import Value
 from transformers import (AutoModelForQuestionAnswering,
                           TrainingArguments,
                           default_data_collator,
@@ -186,23 +187,23 @@ if __name__ == "__main__":
     #     validation=f'datasets/cuad-validation-{language_code}.jsonl'
     # ))
 
-    print(squad)
-    print(fquad)
-    print(gquad)
-    print(aqa)
+    # Ensure that the gquad dataset has its `id` feature as string
+    gquad_feats = gquad['train'].features.copy()
+    gquad_feats['id'] = Value('string')
+    gquad = gquad.cast(gquad_feats)
 
     train_dataset = concatenate_datasets([
         squad['train'],
         fquad['train'],
         gquad['train'],
         aqa['train']
-    ])
+    ]).shuffle()
     val_dataset = concatenate_datasets([
         squad['validation'],
         fquad['validation'],
         gquad['validation'],
         aqa['validation']
-    ])
+    ]).shuffle()
     dataset_dict = DatasetDict()
     dataset_dict['train'] = train_dataset
     dataset_dict['validation'] = val_dataset
