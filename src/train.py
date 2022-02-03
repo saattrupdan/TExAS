@@ -11,6 +11,7 @@ from transformers import (AutoModelForQuestionAnswering,
                           Trainer)
 from pathlib import Path
 from typing import Dict
+from collections import defaultdict
 import json
 
 from data_preparation import QAPreparer
@@ -183,25 +184,17 @@ if __name__ == "__main__":
         validation=f'datasets/sberquad-validation-{language_code}.jsonl'
     ))
 
-    # Ensure that the gquad dataset has its `id` feature as string
-    gquad_feats = gquad['train'].features.copy()
-    gquad_feats['id'] = Value('string')
-    gquad = gquad.cast(gquad_feats)
+    # Ensure that the datasets have the `id` feature as string
+    datasets = defaultdict(list)
+    for dataset in [squad, fquad, gquad, aqa, sberquad]:
+        dataset_feats = dataset['train'].features.copy()
+        dataset_feats['id'] = Value('string')
+        dataset = dataset.cast(dataset_feats)
+        datasets['train'].append(dataset['train'])
+        datasets['validation'].append(dataset['validation'])
 
-    train_dataset = concatenate_datasets([
-        squad['train'],
-        fquad['train'],
-        gquad['train'],
-        aqa['train'],
-        sberquad['train']
-    ]).shuffle()
-    val_dataset = concatenate_datasets([
-        squad['validation'],
-        fquad['validation'],
-        gquad['validation'],
-        aqa['validation'],
-        sberquad['validation']
-    ]).shuffle()
+    train_dataset = concatenate_datasets(datasets['train']).shuffle()
+    val_dataset = concatenate_datasets(datasets['validation']).shuffle()
     dataset_dict = DatasetDict()
     dataset_dict['train'] = train_dataset
     dataset_dict['validation'] = val_dataset
