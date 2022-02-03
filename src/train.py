@@ -213,5 +213,5 @@ if __name__ == "__main__":
 
     # Train the model
     train(dataset_dict,
-          output_model_id=f'saattrupdan/xlmr-base-texas-squad-{language_code}',
+          output_model_id=f'saattrupdan/xlmr-base-texas-{language_code}',
           config=config)
