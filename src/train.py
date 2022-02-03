@@ -3,7 +3,7 @@
 This is based on the example at:
     https://colab.research.google.com/github/huggingface/notebooks/blob/master/examples/question_answering.ipynb
 '''
-from datasets import DatasetDict, load_metric, Dataset
+from datasets import DatasetDict, load_metric, Dataset, concatenate_datasets
 from transformers import (AutoModelForQuestionAnswering,
                           TrainingArguments,
                           default_data_collator,
@@ -160,11 +160,47 @@ if __name__ == "__main__":
     else:
         raise ValueError('Please provide a language code')
 
-    # Load dataset dict
-    dataset_dict = DatasetDict.from_json(dict(
+    # Load datasets
+    squad = DatasetDict.from_json(dict(
         train=f'datasets/squad_v2-train-{language_code}.jsonl',
         validation=f'datasets/squad_v2-validation-{language_code}.jsonl'
     ))
+    fquad = DatasetDict.from_json(dict(
+        train=f'datasets/fquad-train-{language_code}.jsonl',
+        validation=f'datasets/fquad-val-{language_code}.jsonl'
+    ))
+    gquad = DatasetDict.from_json(dict(
+        train=f'datasets/deepset-germanquad-train-{language_code}.jsonl',
+        validation=f'datasets/deepset-germanquad-test-{language_code}.jsonl'
+    ))
+    aqa = DatasetDict.from_json(dict(
+        train=f'datasets/adversarial_qa-adversarialQA-train-{language_code}.jsonl',
+        validation=f'datasets/adversarial_qa-adversarialQA-validation-{language_code}.jsonl'
+    ))
+    # sberquad = DatasetDict.from_json(dict(
+    #     train=f'datasets/sberquad-train-{language_code}.jsonl',
+    #     validation=f'datasets/sberquad-validation-{language_code}.jsonl'
+    # ))
+    # cuad = DatasetDict.from_json(dict(
+    #     train=f'datasets/cuad-train-{language_code}.jsonl',
+    #     validation=f'datasets/cuad-validation-{language_code}.jsonl'
+    # ))
+
+    train_dataset = concatenate_datasets([
+        squad['train'],
+        fquad['train'],
+        gquad['train'],
+        aqa['train']
+    ])
+    val_dataset = concatenate_datasets([
+        squad['validation'],
+        fquad['validation'],
+        gquad['validation'],
+        aqa['validation']
+    ])
+    dataset_dict = DatasetDict()
+    dataset_dict['train'] = train_dataset
+    dataset_dict['validation'] = val_dataset
 
     # Load config
     config = Config()
