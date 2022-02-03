@@ -637,9 +637,9 @@ if __name__ == '__main__':
     texas = Texas()
 
     # SQuAD 2.0
-    # params = dict(dataset_id='squad_v2', target_language='da')
-    # for split in ['train', 'validation']:
-    #     texas.translate_dataset(split=split, **params)
+    params = dict(dataset_id='squad_v2', target_language='es')
+    for split in ['train', 'validation']:
+        texas.translate_dataset(split=split, **params)
 
     # Adversarial QA
     # params = dict(dataset_id='adversarial_qa',
@@ -649,9 +649,9 @@ if __name__ == '__main__':
     #     texas.translate_dataset(split=split, **params)
 
     # CUAD
-    params = dict(dataset_id='cuad', target_language='da')
-    for split in ['train', 'test']:
-        texas.translate_dataset(split=split, **params)
+    # params = dict(dataset_id='cuad', target_language='da')
+    # for split in ['train', 'test']:
+    #     texas.translate_dataset(split=split, **params)
 
     # SberQuAD
     # params = dict(dataset_id='sberquad',
