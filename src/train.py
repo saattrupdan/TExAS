@@ -178,14 +178,10 @@ if __name__ == "__main__":
         train=f'datasets/adversarial_qa-adversarialQA-train-{language_code}.jsonl',
         validation=f'datasets/adversarial_qa-adversarialQA-validation-{language_code}.jsonl'
     ))
-    # sberquad = DatasetDict.from_json(dict(
-    #     train=f'datasets/sberquad-train-{language_code}.jsonl',
-    #     validation=f'datasets/sberquad-validation-{language_code}.jsonl'
-    # ))
-    # cuad = DatasetDict.from_json(dict(
-    #     train=f'datasets/cuad-train-{language_code}.jsonl',
-    #     validation=f'datasets/cuad-validation-{language_code}.jsonl'
-    # ))
+    sberquad = DatasetDict.from_json(dict(
+        train=f'datasets/sberquad-train-{language_code}.jsonl',
+        validation=f'datasets/sberquad-validation-{language_code}.jsonl'
+    ))
 
     # Ensure that the gquad dataset has its `id` feature as string
     gquad_feats = gquad['train'].features.copy()
@@ -196,13 +192,15 @@ if __name__ == "__main__":
         squad['train'],
         fquad['train'],
         gquad['train'],
-        aqa['train']
+        aqa['train'],
+        sberquad['train']
     ]).shuffle()
     val_dataset = concatenate_datasets([
         squad['validation'],
         fquad['validation'],
         gquad['validation'],
-        aqa['validation']
+        aqa['validation'],
+        sberquad['validation']
     ]).shuffle()
     dataset_dict = DatasetDict()
     dataset_dict['train'] = train_dataset
