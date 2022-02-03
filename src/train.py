@@ -186,6 +186,11 @@ if __name__ == "__main__":
     #     validation=f'datasets/cuad-validation-{language_code}.jsonl'
     # ))
 
+    print(squad)
+    print(fquad)
+    print(gquad)
+    print(aqa)
+
     train_dataset = concatenate_datasets([
         squad['train'],
         fquad['train'],
