@@ -115,7 +115,7 @@ class QAPreparer:
             context = example['context']
 
             # Loop through all the features associated to the current example
-            min_null_score = None
+            min_null_score = 0.
             valid_answers = []
             for feature_index in feature_indices:
 
@@ -136,8 +136,7 @@ class QAPreparer:
                              .index(tokenizer.cls_token_id))
                 feature_null_score = (start_logits[cls_index] +
                                       end_logits[cls_index])
-                if (min_null_score is None or
-                        min_null_score < feature_null_score):
+                if min_null_score < feature_null_score:
                     min_null_score = feature_null_score
 
                 # Go through all possibilities for the `n_best_size` greater
