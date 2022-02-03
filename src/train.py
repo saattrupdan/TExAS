@@ -167,7 +167,7 @@ if __name__ == "__main__":
     ))
     fquad = DatasetDict.from_json(dict(
         train=f'datasets/fquad-train-{language_code}.jsonl',
-        validation=f'datasets/fquad-val-{language_code}.jsonl'
+        validation=f'datasets/fquad-validation-{language_code}.jsonl'
     ))
     gquad = DatasetDict.from_json(dict(
         train=f'datasets/deepset-germanquad-train-{language_code}.jsonl',
