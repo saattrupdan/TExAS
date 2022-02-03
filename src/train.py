@@ -74,6 +74,9 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     # Finetune the model
     trainer.train()
 
+    # Save the model
+    trainer.save_model()
+
     # Initialise the test dataset
     test_dataset = dataset_dict['validation']
 
@@ -89,9 +92,6 @@ def train(dataset_dict: DatasetDict, output_model_id: str, config: Config):
     with score_path.open('w') as f:
         jsonned = json.dumps(scores)
         f.write(jsonned)
-
-    # Save the model
-    trainer.save_model()
 
     # Stop Wandb logging
     wandb.finish()
