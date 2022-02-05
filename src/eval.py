@@ -1,6 +1,6 @@
 '''Evaluation script of question-answering models'''
 
-from datasets import load_dataset, load_metric
+from datasets import load_dataset, load_metric, Dataset
 from transformers import AutoModelForQuestionAnswering, Trainer
 from config import Config
 from data_preparation import QAPreparer
@@ -9,7 +9,8 @@ from data_preparation import QAPreparer
 def evaluate(model_id: str, language: str) -> dict:
 
     # Load XQuAD
-    xquad = load_dataset('xquad', f'xquad.{language}', split='validation')
+    #xquad = load_dataset('xquad', f'xquad.{language}', split='validation')
+    xquad = Dataset.from_json('datasets/squad_v2-validation-da.jsonl')
 
     # Prepare XQuAD for evaluation
     config = Config(model_id=model_id)
@@ -50,10 +51,9 @@ def evaluate(model_id: str, language: str) -> dict:
 
 if __name__ == '__main__':
     evaluation_models = [
-        ('saattrupdan/xlmr-base-texas-squad-de', 'de'),
-        ('deepset/gelectra-base-germanquad', 'de'),
-        ('deepset/gelectra-large-germanquad', 'de'),
-        ('deutsche-telekom/electra-base-de-squad2', 'de')
+        ('saattrupdan/xlmr-base-texas-da', 'da'),
+        ('saattrupdan/xlmr-base-texas-squad-da', 'da'),
+        ('jacobshein/danish-bert-botxo-qa-squad', 'da'),
     ]
     for model_id, language in evaluation_models:
         print(f'Evaluating {model_id} on {language}')
