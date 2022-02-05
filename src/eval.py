@@ -51,9 +51,8 @@ def evaluate(model_id: str, language: str) -> dict:
 
 if __name__ == '__main__':
     evaluation_models = [
-        ('saattrupdan/xlmr-base-texas-da', 'da'),
-        ('saattrupdan/xlmr-base-texas-squad-da', 'da'),
-        ('jacobshein/danish-bert-botxo-qa-squad', 'da'),
+        ('saattrupdan/xlmr-base-texas-squad-da', 'es'),
+        ('PlanTL-GOB-ES/roberta-base-bne-sqac', 'es'),
     ]
     for model_id, language in evaluation_models:
         print(f'Evaluating {model_id} on {language}')
