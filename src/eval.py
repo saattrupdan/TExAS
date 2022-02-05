@@ -12,6 +12,8 @@ def evaluate(model_id: str, language: str) -> dict:
     xquad = load_dataset('xquad', f'xquad.{language}', split='validation')
     #xquad = Dataset.from_json('datasets/squad_v2-validation-da.jsonl')
 
+    print('Sample of dataset:', xquad[0])
+
     # Prepare XQuAD for evaluation
     config = Config(model_id=model_id)
     preparer = QAPreparer(config=config)
