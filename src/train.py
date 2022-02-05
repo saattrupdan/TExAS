@@ -190,8 +190,13 @@ if __name__ == "__main__":
         datasets['train'].append(dataset['train'])
         datasets['validation'].append(dataset['validation'])
 
-    train_dataset = concatenate_datasets(datasets['train']).shuffle()
-    val_dataset = concatenate_datasets(datasets['validation']).shuffle()
+    train_dict = concatenate_datasets(datasets['train']).shuffle().to_dict()
+    train_dict['id'] = list(range(len(train_dict)))
+    train_dataset = Dataset.from_dict(train_dict)
+    val_dict = concatenate_datasets(datasets['validation']).shuffle().to_dict()
+    val_dict['id'] = list(range(len(train_dict),
+                                len(train_dict) + len(val_dict)))
+    val_dataset = Dataset.from_dict(val_dict)
     dataset_dict = DatasetDict()
     dataset_dict['train'] = train_dataset
     dataset_dict['validation'] = val_dataset
