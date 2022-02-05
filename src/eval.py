@@ -61,5 +61,7 @@ if __name__ == '__main__':
     for model_id, language in evaluation_models:
         print(f'Evaluating {model_id} on {language}')
         scores = evaluate(model_id=model_id, language=language)
+        print()
         print(f'EM: {scores["em"]}')
         print(f'F1: {scores["f1"]}')
+        print()
