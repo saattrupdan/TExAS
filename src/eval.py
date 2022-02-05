@@ -9,8 +9,8 @@ from data_preparation import QAPreparer
 def evaluate(model_id: str, language: str) -> dict:
 
     # Load XQuAD
-    #xquad = load_dataset('xquad', f'xquad.{language}', split='validation')
-    xquad = Dataset.from_json('datasets/squad_v2-validation-da.jsonl')
+    xquad = load_dataset('xquad', f'xquad.{language}', split='validation')
+    #xquad = Dataset.from_json('datasets/squad_v2-validation-da.jsonl')
 
     # Prepare XQuAD for evaluation
     config = Config(model_id=model_id)
