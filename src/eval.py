@@ -55,6 +55,8 @@ if __name__ == '__main__':
     evaluation_models = [
         ('saattrupdan/xlmr-base-texas-squad-es', 'es'),
         ('PlanTL-GOB-ES/roberta-base-bne-sqac', 'es'),
+        ('mrm8488/distill-bert-base-spanish-wwm-cased-finetuned-spa-squad2-es', 'es'),
+        ('mrm8488/bert-base-spanish-wwm-cased-finetuned-spa-squad2-es', 'es'),
     ]
     for model_id, language in evaluation_models:
         print(f'Evaluating {model_id} on {language}')
