@@ -164,47 +164,47 @@ if __name__ == "__main__":
         train=f'datasets/squad_v2-train-{language_code}.jsonl',
         validation=f'datasets/squad_v2-validation-{language_code}.jsonl'
     ))
-    fquad = DatasetDict.from_json(dict(
-        train=f'datasets/fquad-train-{language_code}.jsonl',
-        validation=f'datasets/fquad-validation-{language_code}.jsonl'
-    ))
-    gquad = DatasetDict.from_json(dict(
-        train=f'datasets/deepset-germanquad-train-{language_code}.jsonl',
-        validation=f'datasets/deepset-germanquad-test-{language_code}.jsonl'
-    ))
-    aqa = DatasetDict.from_json(dict(
-        train=f'datasets/adversarial_qa-adversarialQA-train-{language_code}.jsonl',
-        validation=f'datasets/adversarial_qa-adversarialQA-validation-{language_code}.jsonl'
-    ))
-    sberquad = DatasetDict.from_json(dict(
-        train=f'datasets/sberquad-train-{language_code}.jsonl',
-        validation=f'datasets/sberquad-validation-{language_code}.jsonl'
-    ))
+    # fquad = DatasetDict.from_json(dict(
+    #     train=f'datasets/fquad-train-{language_code}.jsonl',
+    #     validation=f'datasets/fquad-validation-{language_code}.jsonl'
+    # ))
+    # gquad = DatasetDict.from_json(dict(
+    #     train=f'datasets/deepset-germanquad-train-{language_code}.jsonl',
+    #     validation=f'datasets/deepset-germanquad-test-{language_code}.jsonl'
+    # ))
+    # aqa = DatasetDict.from_json(dict(
+    #     train=f'datasets/adversarial_qa-adversarialQA-train-{language_code}.jsonl',
+    #     validation=f'datasets/adversarial_qa-adversarialQA-validation-{language_code}.jsonl'
+    # ))
+    # sberquad = DatasetDict.from_json(dict(
+    #     train=f'datasets/sberquad-train-{language_code}.jsonl',
+    #     validation=f'datasets/sberquad-validation-{language_code}.jsonl'
+    # ))
 
     # Ensure that the datasets have the `id` feature as string
-    datasets = defaultdict(list)
-    for dataset in [squad, fquad, gquad, aqa, sberquad]:
-        dataset_feats = dataset['train'].features.copy()
-        dataset_feats['id'] = Value('string')
-        dataset = dataset.cast(dataset_feats)
-        datasets['train'].append(dataset['train'])
-        datasets['validation'].append(dataset['validation'])
+    # datasets = defaultdict(list)
+    # for dataset in [squad, fquad, gquad, aqa, sberquad]:
+    #     dataset_feats = dataset['train'].features.copy()
+    #     dataset_feats['id'] = Value('string')
+    #     dataset = dataset.cast(dataset_feats)
+    #     datasets['train'].append(dataset['train'])
+    #     datasets['validation'].append(dataset['validation'])
 
-    train_dict = concatenate_datasets(datasets['train']).shuffle().to_dict()
-    train_dict['id'] = list(range(len(train_dict)))
-    train_dataset = Dataset.from_dict(train_dict)
-    val_dict = concatenate_datasets(datasets['validation']).shuffle().to_dict()
-    val_dict['id'] = list(range(len(train_dict),
-                                len(train_dict) + len(val_dict)))
-    val_dataset = Dataset.from_dict(val_dict)
-    dataset_dict = DatasetDict()
-    dataset_dict['train'] = train_dataset
-    dataset_dict['validation'] = val_dataset
+    # train_dict = concatenate_datasets(datasets['train']).shuffle().to_dict()
+    # train_dict['id'] = list(range(len(train_dict)))
+    # train_dataset = Dataset.from_dict(train_dict)
+    # val_dict = concatenate_datasets(datasets['validation']).shuffle().to_dict()
+    # val_dict['id'] = list(range(len(train_dict),
+    #                             len(train_dict) + len(val_dict)))
+    # val_dataset = Dataset.from_dict(val_dict)
+    # dataset_dict = DatasetDict()
+    # dataset_dict['train'] = train_dataset
+    # dataset_dict['validation'] = val_dataset
 
     # Load config
     config = Config()
 
     # Train the model
-    train(dataset_dict,
-          output_model_id=f'saattrupdan/xlmr-base-texas-{language_code}',
+    train(squad,  # dataset_dict,
+          output_model_id=f'saattrupdan/xlmr-base-texas-squad-{language_code}',
           config=config)
